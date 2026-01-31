@@ -2,9 +2,16 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppointmentProvider } from './context/AppointmentContext';
-import AuthSelector from './components/shared/AuthSelector';
+
+// Pages
+import LandingPage from './pages/LandingPage';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+
+// Auth Components
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 
@@ -29,23 +36,20 @@ function AppContent() {
   return (
     <Router>
       <Routes>
-        {/* Landing/Auth Page */}
-        <Route 
-          path="/" 
-          element={
-            user ? (
-              userType === 'patient' ? (
-                <Navigate to="/patient" replace />
-              ) : (
-                <Navigate to="/doctor" replace />
-              )
-            ) : (
-              <AuthSelector />
-            )
-          } 
-        />
+        {/* Public Routes */}
+        <Route path="/" element={!user ? <LandingPage /> : (
+          userType === 'patient' ? <Navigate to="/patient" replace /> : <Navigate to="/doctor" replace />
+        )} />
+        
+        <Route path="/login" element={!user ? <Login /> : (
+          userType === 'patient' ? <Navigate to="/patient" replace /> : <Navigate to="/doctor" replace />
+        )} />
+        
+        <Route path="/register" element={!user ? <Register /> : (
+          userType === 'patient' ? <Navigate to="/patient" replace /> : <Navigate to="/doctor" replace />
+        )} />
 
-        {/* Patient Dashboard */}
+        {/* Protected Routes */}
         <Route
           path="/patient"
           element={
@@ -55,7 +59,6 @@ function AppContent() {
           }
         />
 
-        {/* Doctor Dashboard */}
         <Route
           path="/doctor"
           element={
@@ -65,7 +68,7 @@ function AppContent() {
           }
         />
 
-        {/* Catch all - redirect to home */}
+        {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

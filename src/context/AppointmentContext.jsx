@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import appointmentService from '../services/appointmentService';
+import { useAuth } from './AuthContext';
 
 const AppointmentContext = createContext();
 
@@ -12,62 +13,100 @@ export const useAppointments = () => {
 };
 
 export const AppointmentProvider = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
   const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const createAppointment = (appointmentData) => {
-    const newAppointment = {
-      id: uuidv4(),
-      ...appointmentData,
-      status: 'scheduled', // scheduled, in-progress, completed, cancelled
-      createdAt: new Date().toISOString(),
-      roomUrl: null, // Will be set when video call starts
-    };
-    
-    setAppointments(prev => [...prev, newAppointment]);
-    return newAppointment;
+  // Fetch appointments when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchAppointments();
+    } else {
+      setAppointments([]);
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const data = await appointmentService.getAppointments();
+      setAppointments(data);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateAppointment = (id, updates) => {
-    setAppointments(prev =>
-      prev.map(apt => (apt.id === id ? { ...apt, ...updates } : apt))
-    );
+  const createAppointment = async (appointmentData) => {
+    try {
+      const newAppointment = await appointmentService.createAppointment(appointmentData);
+      setAppointments(prev => [...prev, newAppointment]);
+      return newAppointment;
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      throw error;
+    }
   };
 
-  const startVideoCall = (appointmentId, roomUrl) => {
-    updateAppointment(appointmentId, {
-      status: 'in-progress',
-      roomUrl,
-      startTime: new Date().toISOString(),
-    });
+  const updateAppointment = async (id, updates) => {
+    try {
+      const updatedAppointment = await appointmentService.updateAppointment(id, updates);
+      setAppointments(prev =>
+        prev.map(apt => (apt._id === id ? updatedAppointment : apt))
+      );
+      return updatedAppointment;
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      throw error;
+    }
   };
 
-  const endVideoCall = (appointmentId) => {
-    updateAppointment(appointmentId, {
-      status: 'completed',
-      endTime: new Date().toISOString(),
-    });
+  const startVideoCall = async (appointmentId, roomUrl) => {
+    try {
+      const updated = await updateAppointment(appointmentId, {
+        status: 'in-progress',
+        roomUrl,
+      });
+      return updated;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const endVideoCall = async (appointmentId) => {
+    try {
+      const updated = await updateAppointment(appointmentId, {
+        status: 'completed'
+      });
+      return updated;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const getPatientAppointments = (patientId) => {
-    return appointments.filter(apt => apt.patientId === patientId);
+    return appointments.filter(apt => apt.patient?._id === patientId || apt.patient === patientId);
   };
 
   const getDoctorAppointments = (doctorId) => {
-    return appointments.filter(apt => apt.doctorId === doctorId);
+    return appointments.filter(apt => apt.doctor?._id === doctorId || apt.doctor === doctorId);
+  };
+
+  const value = {
+    appointments,
+    loading,
+    createAppointment,
+    updateAppointment,
+    startVideoCall,
+    endVideoCall,
+    getPatientAppointments,
+    getDoctorAppointments,
+    fetchAppointments,
   };
 
   return (
-    <AppointmentContext.Provider
-      value={{
-        appointments,
-        createAppointment,
-        updateAppointment,
-        startVideoCall,
-        endVideoCall,
-        getPatientAppointments,
-        getDoctorAppointments,
-      }}
-    >
+    <AppointmentContext.Provider value={value}>
       {children}
     </AppointmentContext.Provider>
   );

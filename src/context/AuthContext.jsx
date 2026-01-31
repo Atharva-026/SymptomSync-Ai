@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -12,36 +13,70 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userType, setUserType] = useState(null); // 'patient' or 'doctor'
+  const [userType, setUserType] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const loginAsPatient = (patientData) => {
-    setUser(patientData);
-    setUserType('patient');
+  useEffect(() => {
+    const loadUser = () => {
+      try {
+        const savedUser = authService.getCurrentUser();
+        if (savedUser) {
+          setUser(savedUser);
+          setUserType(savedUser.role);
+        }
+      } catch (error) {
+        console.error('Error loading user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  const register = async (userData) => {
+    try {
+      const response = await authService.register(userData);
+      setUser(response.user);
+      setUserType(response.user.role);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const loginAsDoctor = (doctorData) => {
-    setUser(doctorData);
-    setUserType('doctor');
+  const login = async (email, password) => {
+    try {
+      const response = await authService.login(email, password);
+      setUser(response.user);
+      setUserType(response.user.role);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const logout = () => {
+    authService.logout();
     setUser(null);
     setUserType(null);
   };
 
+  const value = {
+    user,
+    userType,
+    loading,
+    register,
+    login,
+    logout,
+    isPatient: userType === 'patient',
+    isDoctor: userType === 'doctor',
+    isAuthenticated: !!user,
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userType,
-        loginAsPatient,
-        loginAsDoctor,
-        logout,
-        isPatient: userType === 'patient',
-        isDoctor: userType === 'doctor',
-      }}
-    >
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

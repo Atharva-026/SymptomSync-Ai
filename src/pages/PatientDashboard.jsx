@@ -17,15 +17,34 @@ import VideoRoom from '../components/video/VideoRoom';
 import Header from '../components/layout/Header';
 import tamboService from '../utils/tamboService';
 import dailyAPI from '../utils/dailyAPI';
+import appointmentService from '../services/appointmentService';
+import { toast } from 'react-toastify';
 
 const PatientDashboard = () => {
   const { user, logout } = useAuth();
-  const { appointments, getPatientAppointments } = useAppointments();
   
   const [view, setView] = useState('home'); // home, assessment, booking, video
   const [currentStep, setCurrentStep] = useState('input');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
+  
+  // Appointments from backend
+  const [myAppointments, setMyAppointments] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchMyAppointments();
+    }
+  }, [user]);
+
+  const fetchMyAppointments = async () => {
+    try {
+      const appointments = await appointmentService.getAppointments();
+      setMyAppointments(appointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
   
   // Assessment data
   const [symptoms, setSymptoms] = useState('');
@@ -40,8 +59,6 @@ const PatientDashboard = () => {
   
   const [activeAppointment, setActiveAppointment] = useState(null);
   const [videoRoomUrl, setVideoRoomUrl] = useState(null);
-
-  const myAppointments = getPatientAppointments(user?.id);
 
   // Calculate risk level
   useEffect(() => {
