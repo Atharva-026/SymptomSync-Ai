@@ -7,6 +7,7 @@ import { AppointmentProvider } from './context/AppointmentContext';
 import LandingPage from './pages/LandingPage';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
+import ViewSharedRecord from './pages/ViewSharedRecord';
 
 // Auth Components
 import Login from './components/auth/Login';
@@ -48,6 +49,9 @@ function AppContent() {
         <Route path="/register" element={!user ? <Register /> : (
           userType === 'patient' ? <Navigate to="/patient" replace /> : <Navigate to="/doctor" replace />
         )} />
+
+        {/* Shared Records Route */}
+        <Route path="/records/view/:token" element={<ViewSharedRecord />} />
 
         {/* Protected Routes */}
         <Route

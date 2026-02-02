@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button, Badge, ListGroup, Alert, Spinner } f
 import { FaCalendarAlt, FaHistory, FaVideo, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useAppointments } from '../context/AppointmentContext';
+import MedicalRecordsDashboard from '../components/medical/MedicalRecordsDashboard';
 import ChatInput from '../components/medical/ChatInput';
 import BodyDiagram from '../components/medical/BodyDiagram';
 import PainScale from '../components/medical/PainScale';
@@ -24,6 +25,7 @@ const PatientDashboard = () => {
   const { user, logout } = useAuth();
   
   const [view, setView] = useState('home'); // home, assessment, booking, video
+  const [activeTab, setActiveTab] = useState('home'); // 'home', 'assessment', 'booking', 'video', 'records'
   const [currentStep, setCurrentStep] = useState('input');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
@@ -468,7 +470,7 @@ const PatientDashboard = () => {
                 <FaHistory className="me-2" />
                 Assessment History
               </ListGroup.Item>
-              <ListGroup.Item action>
+              <ListGroup.Item action onClick={() => setActiveTab('records')}>
                 📄 Medical Records
               </ListGroup.Item>
               <ListGroup.Item action onClick={logout}>
@@ -699,13 +701,18 @@ const PatientDashboard = () => {
     </Row>
   );
 
+  const renderMedicalRecords = () => (
+    <MedicalRecordsDashboard />
+  );
+
   // MAIN RENDER
   return (
     <>
       <Header />
       <Container fluid className="py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
         <Container>
-          {view === 'home' && renderHome()}
+          {view === 'home' && activeTab === 'home' && renderHome()}
+          {view === 'home' && activeTab === 'records' && renderMedicalRecords()}
           {view === 'assessment' && renderAssessment()}
           {view === 'booking' && renderBooking()}
           {view === 'video' && renderVideoCall()}

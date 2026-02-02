@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Alert } from 'react-bootstrap';
-import { FaCalendarCheck, FaVideo, FaUserInjured, FaSignOutAlt, FaClock } from 'react-icons/fa';
+import { FaCalendarCheck, FaVideo, FaUserInjured, FaSignOutAlt, FaClock, FaQrcode } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { useAppointments } from '../../context/AppointmentContext';
 import Header from '../layout/Header';
 import AppointmentQueue from './AppointmentQueue';
 import PatientDetailsModal from './PatientDetailsModal';
+import QRScannerModal from '../medical/QRScanner';
 import VideoRoom from '../video/VideoRoom';
 import dailyAPI from '../../utils/dailyAPI';
 
@@ -16,6 +17,7 @@ const DoctorDashboard = () => {
   const [view, setView] = useState('home'); // home, video
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [videoRoomUrl, setVideoRoomUrl] = useState(null);
   const [activeCall, setActiveCall] = useState(null);
 
@@ -175,6 +177,10 @@ const DoctorDashboard = () => {
 
       {/* Logout Button */}
       <div className="text-center mt-4">
+        <Button variant="outline-primary" onClick={() => setShowQRScanner(true)} className="me-2">
+          <FaQrcode className="me-2" />
+          Scan Patient Record
+        </Button>
         <Button variant="outline-danger" onClick={logout}>
           <FaSignOutAlt className="me-2" />
           Logout
@@ -227,6 +233,12 @@ const DoctorDashboard = () => {
         show={showDetailsModal}
         onHide={() => setShowDetailsModal(false)}
         appointment={selectedAppointment}
+      />
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal
+        show={showQRScanner}
+        onHide={() => setShowQRScanner(false)}
       />
     </>
   );
