@@ -3,12 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { initializeSocket } = require('./socket/socketHandler');
+const path = require('path');
 
 // Routes
 const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
 const appointmentRoutes = require('./routes/appointments');
 const assessmentRoutes = require('./routes/assessments');
+const medicalRecordRoutes = require('./routes/medicalRecords');
 
 const app = express();
 
@@ -29,6 +31,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
+
+// Serve static files (uploaded files)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Medical records routes
+app.use('/api/medical-records', medicalRecordRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
