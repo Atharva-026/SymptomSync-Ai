@@ -32,26 +32,26 @@ const AppointmentQueue = ({ appointments, onStartCall, onViewDetails }) => {
         ) : (
           <ListGroup variant="flush">
             {appointments.map((apt) => (
-              <ListGroup.Item key={apt.id} className="p-3">
+              <ListGroup.Item key={apt._id} className="p-3">
                 <Row className="align-items-center">
                   <Col md={6}>
-                    <h6 className="mb-1 fw-bold">{apt.patientName}</h6>
+                    <h6 className="mb-1 fw-bold">{apt.patient?.name || apt.patientName}</h6>
                     <div className="d-flex gap-2 mb-2">
                       <Badge bg={getStatusColor(apt.status)}>
                         {apt.status}
                       </Badge>
-                      {getPriorityBadge(apt.riskLevel)}
+                      {getPriorityBadge(apt.riskLevel || 0)}
                       {apt.isUrgent && <Badge bg="danger">Urgent</Badge>}
                     </div>
                     <small className="text-muted d-block">
-                      <strong>Symptoms:</strong> {apt.assessmentData?.symptoms || 'N/A'}
+                      <strong>Symptoms:</strong> {apt.assessment?.symptoms || 'N/A'}
                     </small>
                   </Col>
                   <Col md={3}>
                     <div className="text-muted small">
                       <div><strong>Date:</strong> {apt.date}</div>
                       <div><strong>Time:</strong> {apt.time}</div>
-                      <div><strong>Risk:</strong> {apt.riskLevel}%</div>
+                      <div><strong>Risk:</strong> {apt.riskLevel || 0}%</div>
                     </div>
                   </Col>
                   <Col md={3} className="text-end">

@@ -4,9 +4,26 @@ class DailyService {
     this.baseUrl = 'https://api.daily.co/v1';
   }
 
-  // Create a new video room
-  async createRoom(roomName = null) {
+  // Generate unique room name
+  generateRoomName(appointmentId) {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    return `apt-${appointmentId}-${timestamp}-${random}`;
+  }
+
+  async createRoom(appointmentId = null) {
     try {
+      if (!this.apiKey) {
+        console.warn('⚠️ Daily.co API key not configured');
+        return {
+          url: `https://symptomsync.daily.co/demo-${Date.now()}`,
+          name: `demo-room-${Date.now()}`,
+        };
+      }
+
+      // Generate unique room name
+      const roomName = this.generateRoomName(appointmentId || Date.now());
+
       const response = await fetch(`${this.baseUrl}/rooms`, {
         method: 'POST',
         headers: {
@@ -14,23 +31,35 @@ class DailyService {
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          name: roomName || `room-${Date.now()}`,
+          name: roomName,
           privacy: 'private',
           properties: {
             enable_screenshare: true,
             enable_chat: true,
-            enable_knocking: true,
-            max_participants: 2, // Patient + Doctor only
-            exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
+            enable_knocking: false,
+            max_participants: 10,
+            exp: Math.floor(Date.now() / 1000) + 7200, // 2 hours
           },
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create room');
+        const error = await response.json();
+        
+        // If room exists, try to get existing room
+        if (error.error === 'invalid-request-error' && error.info?.includes('already exists')) {
+          console.log('Room exists, trying to fetch existing room...');
+          // Generate new unique name and try again
+          return this.createRoom(appointmentId);
+        }
+        
+        throw new Error(error.info || 'Failed to create room');
       }
 
       const room = await response.json();
+      // Ensure room has a full URL to join. API may return a name only.
+      room.url = room.url || `https://${room.name}.daily.co`;
+      console.log('✅ Room created successfully:', room.name);
       return room;
     } catch (error) {
       console.error('Error creating Daily.co room:', error);
@@ -38,29 +67,22 @@ class DailyService {
     }
   }
 
-  // Get room details
-  async getRoom(roomName) {
+  async getOrCreateRoom(appointmentId) {
     try {
-      const response = await fetch(`${this.baseUrl}/rooms/${roomName}`, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Room not found');
-      }
-
-      return await response.json();
+      // Try to create a new room
+      return await this.createRoom(appointmentId);
     } catch (error) {
-      console.error('Error fetching room:', error);
+      console.error('Failed to get or create room:', error);
       throw error;
     }
   }
 
-  // Delete a room
   async deleteRoom(roomName) {
     try {
+      if (!this.apiKey) {
+        return true;
+      }
+
       const response = await fetch(`${this.baseUrl}/rooms/${roomName}`, {
         method: 'DELETE',
         headers: {
@@ -71,39 +93,10 @@ class DailyService {
       return response.ok;
     } catch (error) {
       console.error('Error deleting room:', error);
-      throw error;
-    }
-  }
-
-  // Create meeting token (for secure access)
-  async createMeetingToken(roomName, userName, isOwner = false) {
-    try {
-      const response = await fetch(`${this.baseUrl}/meeting-tokens`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          properties: {
-            room_name: roomName,
-            user_name: userName,
-            is_owner: isOwner,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create meeting token');
-      }
-
-      const { token } = await response.json();
-      return token;
-    } catch (error) {
-      console.error('Error creating meeting token:', error);
-      throw error;
+      return false;
     }
   }
 }
 
-export default new DailyService();
+const dailyService = new DailyService();
+export default dailyService;

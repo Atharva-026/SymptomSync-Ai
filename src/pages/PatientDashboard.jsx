@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, ListGroup, Alert, Spinner } from 'react-bootstrap';
 import { FaCalendarAlt, FaHistory, FaVideo, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
-import { useAppointments } from '../context/AppointmentContext';
+
 import MedicalRecordsDashboard from '../components/medical/MedicalRecordsDashboard';
 import ChatInput from '../components/medical/ChatInput';
 import BodyDiagram from '../components/medical/BodyDiagram';
@@ -19,7 +19,7 @@ import Header from '../components/layout/Header';
 import tamboService from '../utils/tamboService';
 import dailyAPI from '../utils/dailyAPI';
 import appointmentService from '../services/appointmentService';
-import { toast } from 'react-toastify';
+
 
 const PatientDashboard = () => {
   const { user, logout } = useAuth();
@@ -356,13 +356,18 @@ const PatientDashboard = () => {
 
   const startVideoCall = async (appointment) => {
     try {
-      const room = await dailyAPI.createRoom(`appointment-${appointment.id}`);
+      console.log('🎥 Starting call for appointment:', appointment._id);
+      
+      // Create unique Daily.co room
+      const room = await dailyAPI.createRoom(appointment._id);
+      console.log('✅ Room created:', room);
+      
       setVideoRoomUrl(room.url);
       setActiveAppointment(appointment);
       setView('video');
     } catch (error) {
-      console.error('Error starting video call:', error);
-      alert('Failed to start video call. Please try again.');
+      console.error('❌ Error starting video call:', error);
+      alert(`Failed to start video call: ${error.message || 'Please try again.'}`);
     }
   };
 

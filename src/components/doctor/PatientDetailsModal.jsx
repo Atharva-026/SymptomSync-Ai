@@ -5,7 +5,7 @@ import { FaUser, FaExclamationTriangle, FaHeartbeat } from 'react-icons/fa';
 const PatientDetailsModal = ({ show, onHide, appointment }) => {
   if (!appointment) return null;
 
-  const assessmentData = appointment.assessmentData || {};
+  const assessmentData = appointment.assessment || {};
 
   return (
     <Modal show={show} onHide={onHide} size="lg" centered>
@@ -20,14 +20,14 @@ const PatientDetailsModal = ({ show, onHide, appointment }) => {
               <Col md={8}>
                 <h5 className="mb-2">
                   <FaUser className="me-2 text-primary" />
-                  {appointment.patientName}
+                  {appointment.patient?.name}
                 </h5>
-                <p className="mb-1"><strong>Patient ID:</strong> {appointment.patientId}</p>
+                <p className="mb-1"><strong>Patient ID:</strong> {appointment.patient?._id}</p>
                 <p className="mb-1"><strong>Appointment:</strong> {appointment.date} at {appointment.time}</p>
               </Col>
               <Col md={4} className="text-end">
                 <Badge bg={appointment.riskLevel >= 60 ? 'danger' : 'warning'} className="mb-2">
-                  Risk: {appointment.riskLevel}%
+                  Risk: {appointment.riskLevel || 0}%
                 </Badge>
                 {appointment.isUrgent && (
                   <div>
@@ -62,7 +62,7 @@ const PatientDetailsModal = ({ show, onHide, appointment }) => {
                     <strong>Location:</strong> {assessmentData.bodyPart?.emoji} {assessmentData.bodyPart?.name}
                   </ListGroup.Item>
                   <ListGroup.Item className="px-0">
-                    <strong>Pain Level:</strong> {assessmentData.painLevel}/10
+                    <strong>Pain Level:</strong> {assessmentData.painLevel || 0}/10
                   </ListGroup.Item>
                   <ListGroup.Item className="px-0">
                     <strong>Duration:</strong> {assessmentData.duration?.amount} {assessmentData.duration?.unit}
@@ -72,17 +72,17 @@ const PatientDetailsModal = ({ show, onHide, appointment }) => {
               <Col md={6}>
                 <div className="p-3 bg-light rounded">
                   <FaHeartbeat className="text-danger me-2" />
-                  <strong>Risk Level: {appointment.riskLevel}%</strong>
+                  <strong>Risk Level: {appointment.riskLevel || 0}%</strong>
                   <div className="progress mt-2" style={{ height: '20px' }}>
                     <div
                       className={`progress-bar ${
-                        appointment.riskLevel >= 80 ? 'bg-danger' :
-                        appointment.riskLevel >= 60 ? 'bg-warning' :
-                        appointment.riskLevel >= 40 ? 'bg-info' : 'bg-success'
+                        (appointment.riskLevel || 0) >= 80 ? 'bg-danger' :
+                        (appointment.riskLevel || 0) >= 60 ? 'bg-warning' :
+                        (appointment.riskLevel || 0) >= 40 ? 'bg-info' : 'bg-success'
                       }`}
-                      style={{ width: `${appointment.riskLevel}%` }}
+                      style={{ width: `${appointment.riskLevel || 0}%` }}
                     >
-                      {appointment.riskLevel}%
+                      {appointment.riskLevel || 0}%
                     </div>
                   </div>
                 </div>
@@ -118,11 +118,11 @@ const PatientDetailsModal = ({ show, onHide, appointment }) => {
             <p className="mb-2"><strong>Presenting Complaint:</strong></p>
             <p className="text-muted small">
               Patient reports {assessmentData.symptoms?.toLowerCase()} located in the {assessmentData.bodyPart?.name?.toLowerCase()} 
-              with pain intensity rated {assessmentData.painLevel}/10. Symptoms started {assessmentData.duration?.amount} {assessmentData.duration?.unit} ago.
-              AI risk assessment indicates {appointment.riskLevel}% risk level.
+              with pain intensity rated {assessmentData.painLevel || 0}/10. Symptoms started {assessmentData.duration?.amount} {assessmentData.duration?.unit} ago.
+              AI risk assessment indicates {appointment.riskLevel || 0}% risk level.
             </p>
             
-            {appointment.riskLevel >= 60 && (
+            {(appointment.riskLevel || 0) >= 60 && (
               <div className="alert alert-warning mt-3 mb-0">
                 <FaExclamationTriangle className="me-2" />
                 <strong>High Priority:</strong> Consider immediate evaluation and intervention based on risk assessment.

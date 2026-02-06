@@ -1,13 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Alert, Card } from 'react-bootstrap';
 import { FaQrcode, FaDownload, FaCopy, FaCheckCircle } from 'react-icons/fa';
+import QRCode from 'qrcode';
 
 const QRCodeDisplay = ({ show, onHide, record }) => {
   const [copied, setCopied] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+
+  const generateQRCode = useCallback(async () => {
+    if (!record) return;
+    
+    try {
+      // Create medical record data object
+      const medicalRecordData = {
+        type: 'MEDICAL_RECORD',
+        recordId: record._id || record.id || '',
+        patientName: record.patientName || 'Unknown',
+        title: record.title || 'Medical Record',
+        description: record.description || '',
+        diagnosis: record.diagnosis || '',
+        prescription: record.prescription || '',
+        date: record.date || new Date().toISOString(),
+        doctorName: record.doctorName || '',
+      };
+
+      // Convert to JSON string
+      const jsonString = JSON.stringify(medicalRecordData);
+      console.log('📱 Generating QR code with data:', jsonString);
+
+      // Generate QR code as data URL
+      const dataUrl = await QRCode.toDataURL(jsonString, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      setQrCodeDataUrl(dataUrl);
+      console.log('✅ QR Code generated successfully');
+
+    } catch (error) {
+      console.error('❌ Error generating QR code:', error);
+    }
+  }, [record]);
+
+  useEffect(() => {
+    if (record && show) {
+      generateQRCode();
+    }
+  }, [record, show, generateQRCode]);
 
   if (!record) return null;
 
-  const shareUrl = `${window.location.origin}/records/view/${record.shareToken}`;
+  const shareUrl = record.shareToken 
+    ? `${window.location.origin}/records/view/${record.shareToken}`
+    : `${window.location.origin}/records/view/${record._id || record.id}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -16,10 +65,15 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
   };
 
   const handleDownloadQR = () => {
+    if (!qrCodeDataUrl) {
+      alert('QR Code not generated yet. Please wait...');
+      return;
+    }
+
     // Create download link for QR code
     const link = document.createElement('a');
-    link.href = record.qrCode;
-    link.download = `${record.title}-QRCode.png`;
+    link.href = qrCodeDataUrl;
+    link.download = `${record.title || 'medical-record'}-QRCode.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -38,14 +92,14 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
           <strong>📱 How to share:</strong>
           <ul className="mb-0 mt-2">
             <li>Show this QR code to your doctor</li>
-            <li>Doctor scans with their phone camera</li>
+            <li>Doctor scans with their phone camera or QR scanner</li>
             <li>Instant secure access to your record</li>
           </ul>
         </Alert>
 
         <Card className="border-0 bg-light mb-4">
           <Card.Body>
-            <h6 className="mb-2">{record.title}</h6>
+            <h6 className="mb-2">{record.title || 'Medical Record'}</h6>
             <p className="small text-muted mb-0">
               {record.description || 'No description'}
             </p>
@@ -54,16 +108,26 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
 
         {/* QR Code Display */}
         <div className="text-center mb-4">
-          <div className="bg-white p-4 rounded shadow-sm d-inline-block">
-            <img
-              src={record.qrCode}
-              alt="QR Code"
-              style={{ width: '300px', height: '300px' }}
-              className="img-fluid"
-            />
-          </div>
+          {qrCodeDataUrl ? (
+            <div className="bg-white p-4 rounded shadow-sm d-inline-block">
+              <img
+                src={qrCodeDataUrl}
+                alt="QR Code"
+                style={{ width: '300px', height: '300px' }}
+                className="img-fluid"
+              />
+            </div>
+          ) : (
+            <div className="bg-white p-4 rounded shadow-sm d-inline-block">
+              <div style={{ width: '300px', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Generating QR Code...</span>
+                </div>
+              </div>
+            </div>
+          )}
           <p className="text-muted small mt-3">
-            Scan this QR code with a smartphone camera
+            Scan this QR code with a smartphone camera or QR scanner app
           </p>
         </div>
 
@@ -113,7 +177,12 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
 
         {/* Action Buttons */}
         <div className="d-flex gap-2 mt-4">
-          <Button variant="outline-primary" onClick={handleDownloadQR} className="flex-fill">
+          <Button 
+            variant="outline-primary" 
+            onClick={handleDownloadQR} 
+            className="flex-fill"
+            disabled={!qrCodeDataUrl}
+          >
             <FaDownload className="me-2" />
             Download QR Code
           </Button>

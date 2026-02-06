@@ -152,7 +152,10 @@ exports.getRecordByToken = async (req, res) => {
     // If user is logged in and is a doctor, add to shared list
     if (req.user && req.user.role === 'doctor') {
       const alreadyShared = record.sharedWith.some(
-        share => share.doctor.toString() === req.user.id
+        share => {
+          const doctorId = typeof share.doctor === 'object' ? share.doctor._id : share.doctor;
+          return doctorId.toString() === req.user.id;
+        }
       );
 
       if (!alreadyShared) {
@@ -166,7 +169,10 @@ exports.getRecordByToken = async (req, res) => {
       } else {
         // Increment access count
         const shareIndex = record.sharedWith.findIndex(
-          share => share.doctor.toString() === req.user.id
+          share => {
+            const doctorId = typeof share.doctor === 'object' ? share.doctor._id : share.doctor;
+            return doctorId.toString() === req.user.id;
+          }
         );
         record.sharedWith[shareIndex].accessCount += 1;
         await record.save();

@@ -12,7 +12,7 @@ import dailyAPI from '../../utils/dailyAPI';
 
 const DoctorDashboard = () => {
   const { user, logout } = useAuth();
-  const { getDoctorAppointments, startVideoCall } = useAppointments();
+  const { getDoctorAppointments, startVideoCall, endVideoCall } = useAppointments();
   
   const [view, setView] = useState('home'); // home, video
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -21,7 +21,7 @@ const DoctorDashboard = () => {
   const [videoRoomUrl, setVideoRoomUrl] = useState(null);
   const [activeCall, setActiveCall] = useState(null);
 
-  const myAppointments = getDoctorAppointments(user?.id);
+  const myAppointments = getDoctorAppointments(user?._id || user?.id);
   
   // Filter appointments by status
   const scheduledAppointments = myAppointments.filter(apt => apt.status === 'scheduled');
@@ -31,17 +31,19 @@ const DoctorDashboard = () => {
   const handleStartCall = async (appointment) => {
     try {
       // Create Daily.co room
-      const room = await dailyAPI.createRoom(`appointment-${appointment.id}`);
+      const room = await dailyAPI.createRoom(`appointment-${appointment._id || appointment.id}`);
+      
+      console.log('✅ Room created:', room);
       
       // Update appointment with room URL
-      startVideoCall(appointment.id, room.url);
+      await startVideoCall(appointment._id || appointment.id, room.url);
       
       setVideoRoomUrl(room.url);
       setActiveCall(appointment);
       setView('video');
     } catch (error) {
-      console.error('Error starting video call:', error);
-      alert('Failed to start video call. Please try again.');
+      console.error('❌ Error starting video call:', error);
+      alert(`Failed to start video call: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -52,7 +54,11 @@ const DoctorDashboard = () => {
 
   const handleLeaveCall = async () => {
     if (activeCall) {
-      // Could add logic to save call notes, mark as completed, etc.
+      try {
+        await endVideoCall(activeCall._id);
+      } catch (error) {
+        console.error('Error ending video call:', error);
+      }
     }
     setVideoRoomUrl(null);
     setActiveCall(null);
@@ -154,11 +160,11 @@ const DoctorDashboard = () => {
               </Card.Header>
               <Card.Body>
                 {completedAppointments.slice(0, 3).map((apt) => (
-                  <div key={apt.id} className="mb-2 p-2 bg-light rounded">
+                  <div key={apt._id} className="mb-2 p-2 bg-light rounded">
                     <Row className="align-items-center">
                       <Col md={6}>
-                        <strong>{apt.patientName}</strong>
-                        <small className="d-block text-muted">{apt.assessmentData?.symptoms}</small>
+                        <strong>{apt.patient?.name || apt.patientName}</strong>
+                        <small className="d-block text-muted">{apt.assessment?.symptoms}</small>
                       </Col>
                       <Col md={3}>
                         <small className="text-muted">{apt.date} at {apt.time}</small>
@@ -194,9 +200,9 @@ const DoctorDashboard = () => {
       <Alert variant="success" className="mb-4">
         <Row className="align-items-center">
           <Col md={8}>
-            <strong>Video Consultation:</strong> {activeCall?.patientName}
+            <strong>Video Consultation:</strong> {activeCall?.patient?.name}
             <div className="mt-1 small">
-              Risk Level: {activeCall?.riskLevel}% | Symptoms: {activeCall?.assessmentData?.symptoms}
+              Risk Level: {activeCall?.riskLevel || 0}% | Symptoms: {activeCall?.assessment?.symptoms}
             </div>
           </Col>
           <Col md={4} className="text-end">
