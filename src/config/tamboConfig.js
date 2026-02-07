@@ -1,89 +1,230 @@
-// Tambo Configuration
-export const tamboConfig = {
-  apiKey: process.env.REACT_APP_TAMBO_API_KEY || 'demo-key',
-  model: 'gpt-4',
-  maxTokens: 1000,
-};
+import { z } from 'zod';
+import ChatInput from '../components/medical/ChatInput';
+import BodyDiagram from '../components/medical/BodyDiagram';
+import PainScale from '../components/medical/PainScale';
+import DurationPicker from '../components/medical/DurationPicker';
+import SymptomChecklist from '../components/medical/SymptomChecklist';
+import RiskMeter from '../components/medical/RiskMeter';
+import RecommendationCard from '../components/medical/RecommendationCard';
 
-// Component registry for Tambo
-export const componentRegistry = {
-  chatInput: {
+// ===== TAMBO COMPONENTS =====
+
+export const tamboComponents = [
+  {
     name: 'ChatInput',
-    description: 'Initial symptom input where user describes their condition',
-    when: 'User starts new assessment or needs to describe symptoms',
-    priority: 1
+    description: 'Text input for patient to describe symptoms in natural language',
+    component: ChatInput,
+    propsSchema: z.object({
+      placeholder: z.string().optional().default('Describe your symptoms...')
+    })
   },
-  bodyDiagram: {
+  {
     name: 'BodyDiagram',
-    description: 'Interactive body diagram for selecting pain location',
-    when: 'User mentions body part or location is unclear',
-    priority: 2
+    description: 'Interactive body diagram for selecting symptom location.',
+    component: BodyDiagram,
+    propsSchema: z.object({})
   },
-  painScale: {
+  {
     name: 'PainScale',
-    description: 'Pain intensity assessment from 1-10',
-    when: 'User mentions pain, discomfort, or ache',
-    priority: 3
+    description: 'Pain rating scale from 1-10.',
+    component: PainScale,
+    propsSchema: z.object({})
   },
-  durationPicker: {
+  {
     name: 'DurationPicker',
-    description: 'Select when symptoms started',
-    when: 'Need to understand symptom timeline',
-    priority: 4
+    description: 'Selector for how long symptoms have persisted.',
+    component: DurationPicker,
+    propsSchema: z.object({})
   },
-  symptomChecklist: {
+  {
     name: 'SymptomChecklist',
-    description: 'Additional related symptoms selection',
-    when: 'After primary symptom identified, need more details',
-    priority: 5
+    description: 'Checklist of additional symptoms.',
+    component: SymptomChecklist,
+    propsSchema: z.object({
+      primarySymptom: z.object({
+        id: z.string(),
+        name: z.string()
+      }).optional().describe('The primary body part or symptom already identified')
+    })
   },
-  emergencyWarning: {
-    name: 'EmergencyWarning',
-    description: 'Critical warning for emergency symptoms',
-    when: 'User mentions chest pain, difficulty breathing, severe headache, or other red flags',
-    priority: 0 // Highest priority
+  {
+    name: 'RiskMeter',
+    description: 'Visual risk assessment meter (0-100%)',
+    component: RiskMeter,
+    propsSchema: z.object({
+      riskLevel: z.number().min(0).max(100).describe('Risk percentage score')
+    })
   },
-  followUpQuestions: {
-    name: 'FollowUpQuestions',
-    description: 'AI-generated contextual questions',
-    when: 'Need more specific information based on symptoms',
-    priority: 6
-  },
-  recommendationCard: {
+  {
     name: 'RecommendationCard',
-    description: 'Final care recommendations',
-    when: 'Assessment complete',
-    priority: 10
+    description: 'Card showing personalized health recommendations',
+    component: RecommendationCard,
+    propsSchema: z.object({
+      severity: z.enum(['low', 'moderate', 'high', 'emergency']),
+      title: z.string(),
+      description: z.string(),
+      actions: z.array(z.string()),
+      tips: z.array(z.string()).optional()
+    })
   }
-};
-
-// Emergency keywords that trigger immediate warning
-export const emergencyKeywords = [
-  'chest pain',
-  'can\'t breathe',
-  'difficulty breathing',
-  'choking',
-  'severe bleeding',
-  'unconscious',
-  'seizure',
-  'stroke',
-  'heart attack',
-  'chest pressure',
-  'crushing pain',
-  'worst headache',
-  'suicidal',
-  'overdose'
 ];
 
-// Symptom to component mapping
-export const symptomComponentMap = {
-  pain: ['bodyDiagram', 'painScale', 'durationPicker'],
-  headache: ['painScale', 'durationPicker', 'symptomChecklist'],
-  fever: ['durationPicker', 'symptomChecklist'],
-  nausea: ['durationPicker', 'symptomChecklist'],
-  breathing: ['emergencyWarning', 'symptomChecklist'],
-  chest: ['emergencyWarning', 'bodyDiagram', 'painScale'],
-  abdomen: ['bodyDiagram', 'painScale', 'durationPicker'],
+// ===== CUSTOM TOOLS =====
+
+export const tamboTools = [
+  {
+    name: 'analyzeSymptoms',
+    description: 'Analyze symptoms to identify possible conditions',
+    tool: async ({ symptoms, age, gender }) => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/assessments/analyze`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ symptoms, age, gender })
+        });
+        if (!response.ok) throw new Error('Failed to analyze symptoms');
+        return await response.json();
+      } catch (error) {
+        return { error: error.message, possibleConditions: [], recommendations: ['Consult a professional.'] };
+      }
+    },
+    inputSchema: z.object({
+      symptoms: z.array(z.string()),
+      age: z.number().optional(),
+      gender: z.string().optional()
+    }),
+    outputSchema: z.object({
+      possibleConditions: z.array(z.string()),
+      recommendations: z.array(z.string()),
+      analysis: z.string().optional(),
+      error: z.string().optional()
+    })
+  },
+  {
+    name: 'calculateRisk',
+    description: 'Calculate health risk score (0-100)',
+    tool: async ({ painLevel, duration, bodyPart, symptoms }) => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/assessments/risk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ painLevel, duration, bodyPart, symptoms })
+        });
+        if (response.ok) return await response.json();
+      } catch (error) {
+        console.warn('Backend unavailable, using local fallback');
+      }
+
+      // Local Logic
+      let risk = 0;
+      if (painLevel) risk += painLevel * 4;
+      if (duration) {
+        if (duration.unit === 'months' || (duration.unit === 'weeks' && duration.amount > 2)) risk += 20;
+        else risk += 10;
+      }
+      const part = typeof bodyPart === 'string' ? bodyPart.toLowerCase() : (bodyPart?.id || '');
+      if (part.includes('chest')) risk += 20;
+      else if (part.includes('head')) risk += 15;
+      
+      const finalRisk = Math.min(risk + (symptoms.length * 5), 100);
+      return {
+        riskScore: finalRisk,
+        riskLevel: finalRisk >= 80 ? 'emergency' : finalRisk >= 60 ? 'high' : finalRisk >= 40 ? 'moderate' : 'low'
+      };
+    },
+    inputSchema: z.object({
+      painLevel: z.number().min(1).max(10),
+      duration: z.object({
+        amount: z.number(),
+        unit: z.enum(['hours', 'days', 'weeks', 'months'])
+      }),
+      bodyPart: z.any().describe('Affected body part string or object'),
+      symptoms: z.array(z.string())
+    }),
+    outputSchema: z.object({
+      riskScore: z.number(),
+      riskLevel: z.string(),
+      factors: z.array(z.object({ factor: z.string(), impact: z.string() })).optional()
+    })
+  },
+  {
+    name: 'bookAppointment',
+    description: 'Book a doctor appointment',
+    tool: async ({ doctorId, date, time, assessmentId }) => {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/appointments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ doctorId, date, time, assessmentId })
+      });
+      return await response.json();
+    },
+    inputSchema: z.object({
+      doctorId: z.string(),
+      date: z.string(),
+      time: z.string(),
+      assessmentId: z.string().optional()
+    }),
+    outputSchema: z.object({
+      success: z.boolean().optional(),
+      message: z.string().optional(),
+      appointmentId: z.string().optional(),
+      error: z.string().optional()
+    })
+  },
+  {
+    name: 'getMedicalHistory',
+    description: 'Fetch patient medical history',
+    tool: async ({ patientId }) => {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/medical-records?patientId=${patientId}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      return await response.json();
+    },
+    inputSchema: z.object({ patientId: z.string() }),
+    outputSchema: z.object({
+      records: z.array(z.any()),
+      error: z.string().optional()
+    })
+  }
+];
+
+export const emergencyKeywords = [
+  'chest pain', "can't breathe", 'unconscious', 'stroke', 'heart attack', 'suicidal'
+];
+
+export const systemPrompt = `You are SymptomSync AI, a professional medical assistant. 
+Follow this structured workflow:
+1. Greet and ask for symptoms (text only).
+2. Show BodyDiagram.
+3. Show PainScale.
+4. Show DurationPicker.
+5. Show SymptomChecklist.
+6. Run calculateRisk tool, then show RiskMeter and RecommendationCard.
+7. Offer bookAppointment if risk is moderate or higher.`;
+
+export const tamboConfig = {
+  apiKey: process.env.REACT_APP_TAMBO_API_KEY || '',
+  model: 'claude-3-5-sonnet-20240620',
+  maxTokens: 2000,
+  temperature: 0.7
 };
 
-export default tamboConfig;
+// Fixed anonymous default export
+const config = {
+  components: tamboComponents,
+  tools: tamboTools,
+  systemPrompt,
+  emergencyKeywords,
+  tamboConfig
+};
+
+export default config;

@@ -20,6 +20,8 @@ import tamboService from '../utils/tamboService';
 import dailyAPI from '../utils/dailyAPI';
 import appointmentService from '../services/appointmentService';
 
+// NEW: Tambo Assessment Component
+import TamboAssessment from '../components/medical/TamboAssessment';
 
 const PatientDashboard = () => {
   const { user, logout } = useAuth();
@@ -30,6 +32,9 @@ const PatientDashboard = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
   
+  // NEW: Toggle for old vs new
+  const [useTamboMode, setUseTamboMode] = useState(true);
+
   // Appointments from backend
   const [myAppointments, setMyAppointments] = useState([]);
 
@@ -343,7 +348,6 @@ const PatientDashboard = () => {
   const handleBookingComplete = (appointment) => {
     if (appointment) {
       setActiveAppointment(appointment);
-      // If moderate or high risk, show booking option
       if (riskLevel >= 40) {
         setView('booking');
       } else {
@@ -356,12 +360,7 @@ const PatientDashboard = () => {
 
   const startVideoCall = async (appointment) => {
     try {
-      console.log('🎥 Starting call for appointment:', appointment._id);
-      
-      // Create unique Daily.co room
       const room = await dailyAPI.createRoom(appointment._id);
-      console.log('✅ Room created:', room);
-      
       setVideoRoomUrl(room.url);
       setActiveAppointment(appointment);
       setView('video');
@@ -384,7 +383,190 @@ const PatientDashboard = () => {
     return ((currentIndex + 1) / componentOrder.length) * 100;
   };
 
-  // RENDER FUNCTIONS
+  // --- RENDER HELPERS ---
+
+  const renderTraditionalAssessment = () => (
+    <Row>
+      <Col lg={8}>
+        <div className="mb-4">
+          {currentStep !== 'input' && currentStep !== 'emergency' && (
+            <div className="mb-4">
+              <small className="text-muted">Assessment Progress (Traditional)</small>
+              <div className="progress" style={{ height: '8px' }}>
+                <div 
+                  className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                  style={{ width: `${getProgressPercentage()}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 'input' && <ChatInput onSubmit={handleSymptomSubmit} />}
+
+          {currentStep === 'emergency' && (
+            <EmergencyWarning 
+              symptoms={symptoms}
+              onAcknowledge={handleEmergencyAcknowledge}
+            />
+          )}
+
+          {currentStep === 'body' && (
+            <>
+              <div className="mb-3">
+                <Card className="bg-light">
+                  <Card.Body className="py-2">
+                    <p className="mb-0 small"><strong>Symptoms:</strong> {symptoms}</p>
+                  </Card.Body>
+                </Card>
+              </div>
+              <BodyDiagram onSelect={handleBodyPartSelect} />
+            </>
+          )}
+
+          {currentStep === 'pain' && (
+            <>
+              <div className="mb-3">
+                <Card className="bg-light">
+                  <Card.Body className="py-2">
+                    <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
+                    <p className="mb-0 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
+                  </Card.Body>
+                </Card>
+              </div>
+              <PainScale onSelect={handlePainSelect} />
+            </>
+          )}
+
+          {currentStep === 'duration' && (
+            <>
+              <div className="mb-3">
+                <Card className="bg-light">
+                  <Card.Body className="py-2">
+                    <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
+                    <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
+                    <p className="mb-0 small"><strong>Pain Level:</strong> {painLevel}/10</p>
+                  </Card.Body>
+                </Card>
+              </div>
+              <DurationPicker onSelect={handleDurationSelect} />
+            </>
+          )}
+
+          {currentStep === 'followup' && (
+            <>
+              <div className="mb-3">
+                <Alert variant="info">
+                  <strong>🤖 AI has generated specific questions</strong> to better assess your condition.
+                </Alert>
+              </div>
+              <FollowUpQuestions 
+                questions={followUpQuestions}
+                onComplete={handleFollowUpComplete}
+              />
+            </>
+          )}
+
+          {currentStep === 'symptoms' && (
+            <>
+              <div className="mb-3">
+                <Card className="bg-light">
+                  <Card.Body className="py-2">
+                    <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
+                    <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
+                    <p className="mb-1 small"><strong>Pain Level:</strong> {painLevel}/10</p>
+                    <p className="mb-0 small"><strong>Duration:</strong> {duration?.amount} {duration?.unit}</p>
+                  </Card.Body>
+                </Card>
+              </div>
+              <SymptomChecklist 
+                onSelect={handleSymptomsSelect}
+                primarySymptom={bodyPart}
+              />
+              <div className="text-center mt-4">
+                <Button variant="primary" size="lg" onClick={handleContinueToRecommendation}>
+                  Continue to Results
+                </Button>
+              </div>
+            </>
+          )}
+
+          {currentStep === 'recommendation' && (
+            <>
+              <div className="mb-4">
+                <Card className="bg-light border-primary" style={{ borderWidth: '2px' }}>
+                  <Card.Body>
+                    <h5 className="h6 mb-3"><strong>📋 Assessment Summary</strong></h5>
+                    <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
+                    <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
+                    <p className="mb-1 small"><strong>Pain Level:</strong> {painLevel}/10</p>
+                    <p className="mb-1 small"><strong>Duration:</strong> {duration?.amount} {duration?.unit}</p>
+                    <p className="mb-0 small"><strong>Risk Score:</strong> {riskLevel}%</p>
+                  </Card.Body>
+                </Card>
+              </div>
+              <RecommendationCard {...getRecommendation()} />
+              {riskLevel >= 40 && (
+                <div className="text-center mt-4">
+                  <Button variant="success" size="lg" onClick={() => setView('booking')}>
+                    📅 Schedule Consultation
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Col>
+      <Col lg={4}>
+        {(painLevel || bodyPart || duration) && 
+         !['input', 'recommendation', 'emergency'].includes(currentStep) && (
+          <RiskMeter riskLevel={riskLevel} />
+        )}
+      </Col>
+    </Row>
+  );
+
+  const renderAssessment = () => (
+    <>
+      {/* Toggle Button for Assessment Mode */}
+      <div className="mb-4 text-center">
+        <Button 
+          variant="outline-secondary" 
+          size="sm"
+          onClick={() => setUseTamboMode(!useTamboMode)}
+          className="rounded-pill px-4"
+        >
+          {useTamboMode ? '📋 Switch to Traditional Form' : '🤖 Switch to AI Chat Mode'}
+        </Button>
+      </div>
+
+      {isProcessing && (
+        <Alert variant="info" className="d-flex align-items-center fade-in mb-4">
+          <Spinner animation="border" size="sm" className="me-2" />
+          <span>🤖 AI is analyzing your symptoms...</span>
+        </Alert>
+      )}
+
+      {aiMessage && !isProcessing && !['input', 'emergency', 'recommendation'].includes(currentStep) && (
+        <Alert variant="primary" className="fade-in mb-4">
+          <strong>💡 AI Insight:</strong> {aiMessage}
+        </Alert>
+      )}
+
+      {/* Show Tambo or Traditional based on toggle */}
+      {useTamboMode ? (
+        <TamboAssessment />
+      ) : (
+        renderTraditionalAssessment()
+      )}
+
+      <div className="text-center mt-4">
+        <Button variant="link" className="text-muted" onClick={() => setView('home')}>
+          Cancel and Return to Dashboard
+        </Button>
+      </div>
+    </>
+  );
+
   const renderHome = () => (
     <>
       <Card className="shadow-custom mb-4 border-0">
@@ -399,7 +581,7 @@ const PatientDashboard = () => {
                 🩺 Start New Assessment
               </Button>
             </Col>
-            <Col md={4} className="text-center">
+            <Col md={4} className="text-center d-none d-md-block">
               <div style={{ fontSize: '8rem' }}>🏥</div>
             </Col>
           </Row>
@@ -427,7 +609,7 @@ const PatientDashboard = () => {
               ) : (
                 <ListGroup variant="flush">
                   {myAppointments.map((apt) => (
-                    <ListGroup.Item key={apt.id} className="px-0">
+                    <ListGroup.Item key={apt.id || apt._id} className="px-0">
                       <Row className="align-items-center">
                         <Col md={7}>
                           <h6 className="mb-1">{apt.doctorName}</h6>
@@ -448,8 +630,7 @@ const PatientDashboard = () => {
                               onClick={() => startVideoCall(apt)}
                               disabled={apt.status !== 'scheduled'}
                             >
-                              <FaVideo className="me-1" />
-                              Join Call
+                              <FaVideo className="me-1" /> Join Call
                             </Button>
                           </div>
                         </Col>
@@ -472,15 +653,13 @@ const PatientDashboard = () => {
                 🩺 New Symptom Check
               </ListGroup.Item>
               <ListGroup.Item action>
-                <FaHistory className="me-2" />
-                Assessment History
+                <FaHistory className="me-2" /> Assessment History
               </ListGroup.Item>
               <ListGroup.Item action onClick={() => setActiveTab('records')}>
                 📄 Medical Records
               </ListGroup.Item>
               <ListGroup.Item action onClick={logout}>
-                <FaSignOutAlt className="me-2" />
-                Logout
+                <FaSignOutAlt className="me-2" /> Logout
               </ListGroup.Item>
             </ListGroup>
           </Card>
@@ -489,202 +668,9 @@ const PatientDashboard = () => {
     </>
   );
 
-  const renderAssessment = () => (
-    <>
-      {isProcessing && (
-        <Alert variant="info" className="d-flex align-items-center fade-in mb-4">
-          <Spinner animation="border" size="sm" className="me-2" />
-          <span>🤖 AI is analyzing your symptoms...</span>
-        </Alert>
-      )}
-
-      {aiMessage && !isProcessing && currentStep !== 'input' && currentStep !== 'emergency' && (
-        <Alert variant="primary" className="fade-in mb-4">
-          <strong>💡 AI Insight:</strong> {aiMessage}
-        </Alert>
-      )}
-
-      <Row>
-        <Col lg={8}>
-          <div className="mb-4">
-            {currentStep !== 'input' && currentStep !== 'emergency' && (
-              <div className="mb-4">
-                <small className="text-muted">Assessment Progress (AI-Guided)</small>
-                <div className="progress" style={{ height: '8px' }}>
-                  <div 
-                    className="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
-                    style={{ width: `${getProgressPercentage()}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 'input' && (
-              <ChatInput onSubmit={handleSymptomSubmit} />
-            )}
-
-            {currentStep === 'emergency' && (
-              <EmergencyWarning 
-                symptoms={symptoms}
-                onAcknowledge={handleEmergencyAcknowledge}
-              />
-            )}
-
-            {currentStep === 'body' && (
-              <>
-                <div className="mb-3">
-                  <Card className="bg-light">
-                    <Card.Body className="py-2">
-                      <p className="mb-0 small">
-                        <strong>Symptoms:</strong> {symptoms}
-                      </p>
-                    </Card.Body>
-                  </Card>
-                </div>
-                <BodyDiagram onSelect={handleBodyPartSelect} />
-              </>
-            )}
-
-            {currentStep === 'pain' && (
-              <>
-                <div className="mb-3">
-                  <Card className="bg-light">
-                    <Card.Body className="py-2">
-                      <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
-                      <p className="mb-0 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
-                    </Card.Body>
-                  </Card>
-                </div>
-                <PainScale onSelect={handlePainSelect} />
-              </>
-            )}
-
-            {currentStep === 'duration' && (
-              <>
-                <div className="mb-3">
-                  <Card className="bg-light">
-                    <Card.Body className="py-2">
-                      <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
-                      <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
-                      <p className="mb-0 small"><strong>Pain Level:</strong> {painLevel}/10</p>
-                    </Card.Body>
-                  </Card>
-                </div>
-                <DurationPicker onSelect={handleDurationSelect} />
-              </>
-            )}
-
-            {currentStep === 'followup' && (
-              <>
-                <div className="mb-3">
-                  <Alert variant="info">
-                    <strong>🤖 AI has generated specific questions</strong> based on your symptoms to better assess your condition.
-                  </Alert>
-                </div>
-                <FollowUpQuestions 
-                  questions={followUpQuestions}
-                  onComplete={handleFollowUpComplete}
-                />
-              </>
-            )}
-
-            {currentStep === 'symptoms' && (
-              <>
-                <div className="mb-3">
-                  <Card className="bg-light">
-                    <Card.Body className="py-2">
-                      <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
-                      <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
-                      <p className="mb-1 small"><strong>Pain Level:</strong> {painLevel}/10</p>
-                      <p className="mb-0 small"><strong>Duration:</strong> {duration?.amount} {duration?.unit}</p>
-                    </Card.Body>
-                  </Card>
-                </div>
-                <SymptomChecklist 
-                  onSelect={handleSymptomsSelect}
-                  primarySymptom={bodyPart}
-                />
-                <div className="text-center mt-4">
-                  <Button 
-                    variant="primary" 
-                    size="lg"
-                    onClick={handleContinueToRecommendation}
-                  >
-                    Continue to AI-Generated Results
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {currentStep === 'recommendation' && (
-              <>
-                <div className="mb-4">
-                  <Card className="bg-light border-primary" style={{ borderWidth: '2px' }}>
-                    <Card.Body>
-                      <h5 className="h6 mb-3"><strong>📋 AI Assessment Summary</strong></h5>
-                      <p className="mb-1 small"><strong>Symptoms:</strong> {symptoms}</p>
-                      <p className="mb-1 small"><strong>Location:</strong> {bodyPart?.emoji} {bodyPart?.name}</p>
-                      <p className="mb-1 small"><strong>Pain Level:</strong> {painLevel}/10</p>
-                      <p className="mb-1 small"><strong>Duration:</strong> {duration?.amount} {duration?.unit}</p>
-                      {additionalSymptoms.length > 0 && (
-                        <p className="mb-1 small"><strong>Additional Symptoms:</strong> {additionalSymptoms.join(', ')}</p>
-                      )}
-                      <p className="mb-0 small"><strong>AI Risk Assessment:</strong> {riskLevel}%</p>
-                    </Card.Body>
-                  </Card>
-                </div>
-
-                <Alert variant="success" className="mb-4">
-                  <strong>🤖 AI Analysis Complete:</strong> Your personalized care plan has been generated.
-                </Alert>
-
-                <RecommendationCard {...getRecommendation()} />
-
-                {riskLevel >= 40 && (
-                  <div className="text-center mt-4">
-                    <Button variant="success" size="lg" onClick={() => setView('booking')}>
-                      📅 Schedule Doctor Consultation
-                    </Button>
-                  </div>
-                )}
-
-                <div className="text-center mt-3">
-                  <Button variant="outline-primary" onClick={() => setView('home')}>
-                    Back to Dashboard
-                  </Button>
-                </div>
-              </>
-            )}
-
-            <div className="text-center mt-4">
-              <Button variant="outline-secondary" onClick={() => setView('home')}>
-                Cancel Assessment
-              </Button>
-            </div>
-          </div>
-        </Col>
-        
-        <Col lg={4}>
-          {(painLevel || bodyPart || duration) && 
-           currentStep !== 'input' && 
-           currentStep !== 'recommendation' && 
-           currentStep !== 'emergency' && (
-            <RiskMeter riskLevel={riskLevel} />
-          )}
-        </Col>
-      </Row>
-    </>
-  );
-
   const renderBooking = () => (
     <BookingInterface 
-      assessmentData={{
-        symptoms,
-        bodyPart,
-        painLevel,
-        duration,
-        additionalSymptoms
-      }}
+      assessmentData={{ symptoms, bodyPart, painLevel, duration, additionalSymptoms }}
       riskLevel={riskLevel}
       onBookingComplete={handleBookingComplete}
     />
@@ -696,7 +682,6 @@ const PatientDashboard = () => {
         <Alert variant="success" className="mb-4">
           <strong>Video Consultation:</strong> You're connected with {activeAppointment?.doctorName}
         </Alert>
-        
         <VideoRoom
           roomUrl={videoRoomUrl}
           userName={user?.name}
@@ -706,11 +691,8 @@ const PatientDashboard = () => {
     </Row>
   );
 
-  const renderMedicalRecords = () => (
-    <MedicalRecordsDashboard />
-  );
+  const renderMedicalRecords = () => <MedicalRecordsDashboard />;
 
-  // MAIN RENDER
   return (
     <>
       <Header />
