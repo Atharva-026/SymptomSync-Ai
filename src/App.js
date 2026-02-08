@@ -4,141 +4,90 @@ import { TamboProvider } from '@tambo-ai/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppointmentProvider } from './context/AppointmentContext';
 
-// Pages
 import LandingPage from './pages/LandingPage';
 import PatientDashboard from './pages/PatientDashboard';
 import DoctorDashboard from './pages/DoctorDashboard';
 import ViewSharedRecord from './pages/ViewSharedRecord';
-
-// Auth Components
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
-
-// Import Tambo config
 import { tamboComponents, tamboTools, systemPrompt } from './config/tamboConfig';
 
-// Protected Route Component
-const ProtectedRoute = ({ children, requiredUserType, allowedRole }) => {
+const ProtectedRoute = ({ children, requiredUserType }) => {
   const { user, userType } = useAuth();
-
   if (!user) return <Navigate to="/" replace />;
   if (requiredUserType && userType !== requiredUserType) return <Navigate to="/" replace />;
-  if (allowedRole && userType !== allowedRole) return <Navigate to="/" replace />;
   return children;
 };
 
-// App Content Component
 function AppContent() {
   const { user, userType } = useAuth();
-
   return (
     <Routes>
-      <Route 
-        path="/" 
-        element={
-          !user ? (
-            <LandingPage />
-          ) : userType === 'patient' ? (
-            <Navigate to="/patient" replace />
-          ) : (
-            <Navigate to="/doctor" replace />
-          )
-        } 
-      />
-
-      <Route 
-        path="/login" 
-        element={
-          !user ? (
-            <Login />
-          ) : userType === 'patient' ? (
-            <Navigate to="/patient" replace />
-          ) : (
-            <Navigate to="/doctor" replace />
-          )
-        } 
-      />
-
-      <Route 
-        path="/register" 
-        element={
-          !user ? (
-            <Register />
-          ) : userType === 'patient' ? (
-            <Navigate to="/patient" replace />
-          ) : (
-            <Navigate to="/doctor" replace />
-          )
-        } 
-      />
-
+      <Route path="/" element={!user ? <LandingPage /> : userType === 'patient' ? <Navigate to="/patient" replace /> : <Navigate to="/doctor" replace />} />
+      <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+      <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
       <Route path="/records/view/:token" element={<ViewSharedRecord />} />
-
-      <Route
-        path="/patient"
-        element={
-          <ProtectedRoute requiredUserType="patient">
-            <PatientDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/doctor"
-        element={
-          <ProtectedRoute requiredUserType="doctor">
-            <DoctorDashboard />
-          </ProtectedRoute>
-        }
-      />
-
+      <Route path="/patient" element={<ProtectedRoute requiredUserType="patient"><PatientDashboard /></ProtectedRoute>} />
+      <Route path="/doctor" element={<ProtectedRoute requiredUserType="doctor"><DoctorDashboard /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
-// Main App Component
 function App() {
   const [userToken, setUserToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
-    // Debug check: This will show in your browser console if the key is missing
-    if (!process.env.REACT_APP_TAMBO_API_KEY) {
-      console.warn("⚠️ Tambo API Key is missing! Check your .env file and restart the server.");
-    }
-
-    const handleStorageChange = () => {
-      setUserToken(localStorage.getItem('token'));
-    };
-    
+    const handleStorageChange = () => setUserToken(localStorage.getItem('token'));
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // MUST use Tambo key, not Anthropic directly
+  const tamboKey = process.env.REACT_APP_TAMBO_API_KEY;
+
+  if (!tamboKey || !tamboKey.startsWith('tambo_')) {
+    console.error('❌ Invalid Tambo API key!');
+    console.error('Run: npx @tambo-ai/cli init');
+    console.error('Or get key from: https://tambo.ai/settings');
+  }
 
   return (
     <Router>
       <AuthProvider>
         <AppointmentProvider>
-          {/* Updated TamboProvider:
-            1. Using a standard Anthropic model ID.
-            2. Passing credentials explicitly.
-          */}
-          <TamboProvider
-            apiKey={process.env.REACT_APP_TAMBO_API_KEY}
-            model={process.env.REACT_APP_TAMBO_MODEL || "claude-3-5-sonnet-20240620"}
-            components={tamboComponents}
-            tools={tamboTools}
-            systemPrompt={systemPrompt}
-            userToken={userToken}
-            streamResponse={true}
-            maxTokens={2000}
-            temperature={0.7}
-          >
-            <AppContent />
-          </TamboProvider>
+          {tamboKey && tamboKey.startsWith('tambo_') ? (
+            <TamboProvider
+              apiKey={tamboKey}
+              components={tamboComponents}
+              tools={tamboTools}
+              systemPrompt={systemPrompt}
+              model="claude-3-5-sonnet-20241022"
+              streamResponse={true}
+              maxTokens={2000}
+            >
+              <AppContent />
+            </TamboProvider>
+          ) : (
+            <div className="vh-100 d-flex align-items-center justify-content-center bg-warning">
+              <div className="alert alert-danger shadow-lg p-5 text-center" style={{maxWidth: '600px'}}>
+                <h3 className="alert-heading mb-4">⚠️ Tambo Setup Required</h3>
+                <p className="mb-4">You need a valid Tambo API key to use this feature.</p>
+                <div className="bg-dark text-white p-3 rounded mb-4 text-start">
+                  <code>
+                    # Run in terminal:<br/>
+                    npx @tambo-ai/cli init
+                  </code>
+                </div>
+                <p className="text-muted small mb-4">Or get your key from: <a href="https://tambo.ai/settings" target="_blank" rel="noreferrer">tambo.ai/settings</a></p>
+                <hr/>
+                <p className="small text-muted mb-0">The app will load once you add REACT_APP_TAMBO_API_KEY to your .env file</p>
+              </div>
+            </div>
+          )}
         </AppointmentProvider>
       </AuthProvider>
     </Router>
