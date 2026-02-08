@@ -577,9 +577,18 @@ const PatientDashboard = () => {
               <p className="text-muted mb-3">
                 How are you feeling today? Start a symptom assessment or manage your appointments.
               </p>
-              <Button variant="primary" size="lg" onClick={startAssessment}>
-                🩺 Start New Assessment
-              </Button>
+              <div className="d-flex gap-3">
+                <Button variant="primary" size="lg" onClick={startAssessment}>
+                  🩺 Start New Assessment
+                </Button>
+                <Button 
+                  variant="success" 
+                  size="lg" 
+                  onClick={() => setView('booking')}
+                >
+                  📅 Schedule Consultation
+                </Button>
+              </div>
             </Col>
             <Col md={4} className="text-center d-none d-md-block">
               <div style={{ fontSize: '8rem' }}>🏥</div>
@@ -602,7 +611,10 @@ const PatientDashboard = () => {
                 <div className="text-center py-5 text-muted">
                   <FaCalendarAlt size={48} className="mb-3 opacity-50" />
                   <p>No appointments scheduled</p>
-                  <Button variant="outline-primary" onClick={startAssessment}>
+                  <Button 
+                    variant="outline-primary" 
+                    onClick={() => setView('booking')}
+                  >
                     Book Your First Consultation
                   </Button>
                 </div>
@@ -651,6 +663,9 @@ const PatientDashboard = () => {
             <ListGroup variant="flush">
               <ListGroup.Item action onClick={startAssessment}>
                 🩺 New Symptom Check
+              </ListGroup.Item>
+              <ListGroup.Item action onClick={() => setView('booking')}>
+                📅 Schedule Consultation
               </ListGroup.Item>
               <ListGroup.Item action>
                 <FaHistory className="me-2" /> Assessment History
