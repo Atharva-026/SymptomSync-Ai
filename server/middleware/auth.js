@@ -1,44 +1,55 @@
+// server/middleware/auth.js
+
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-exports.protect = async (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+    const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authorized to access this route'
-      });
+      return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id);
-      next();
-    } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authorized to access this route'
-      });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
     }
+
+    req.user = {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      name: user.name
+    };
+
+    next();
   } catch (error) {
-    next(error);
+    console.error('Auth middleware error:', error.message);
+    res.status(401).json({ message: 'Token is not valid' });
   }
 };
 
-exports.authorize = (...roles) => {
+// Authorize middleware - checks user role
+const authorize = (...roles) => {
   return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`
+      return res.status(403).json({ 
+        message: `Role '${req.user.role}' is not authorized to access this route` 
       });
     }
+
     next();
   };
 };
+
+// Export both
+module.exports = auth;
+module.exports.protect = auth;  // Alias so 'protect' works
+module.exports.authorize = authorize;

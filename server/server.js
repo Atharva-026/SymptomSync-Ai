@@ -11,7 +11,7 @@ const doctorRoutes = require('./routes/doctors');
 const appointmentRoutes = require('./routes/appointments');
 const assessmentRoutes = require('./routes/assessments');
 const medicalRecordRoutes = require('./routes/medicalRecords');
-
+const familyAccessRoutes = require('./routes/familyAccess'); // Family Access Routes
 
 const app = express();
 
@@ -33,19 +33,29 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
 
-
 // Serve static files (uploaded files)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Medical records routes
 app.use('/api/medical-records', medicalRecordRoutes);
 
+// Family access routes
+app.use('/api/family-access', familyAccessRoutes);
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Server is running 🚀',
-    timestamp: new Date()
+    timestamp: new Date(),
+    routes: [
+      '/api/auth',
+      '/api/doctors',
+      '/api/appointments',
+      '/api/assessments',
+      '/api/medical-records',
+      '/api/family-access'
+    ]
   });
 });
 
@@ -72,6 +82,16 @@ const server = app.listen(PORT, () => {
 ║                                        ║
 ║   API: http://localhost:${PORT}/api   ║
 ╚════════════════════════════════════════╝
+
+📋 Available API Routes:
+   ✅ Auth:            /api/auth
+   ✅ Doctors:         /api/doctors
+   ✅ Appointments:    /api/appointments
+   ✅ Assessments:     /api/assessments
+   ✅ Medical Records: /api/medical-records
+   ✅ Family Access:   /api/family-access 🆕
+
+🔗 Health Check: http://localhost:${PORT}/api/health
 `);
 });
 

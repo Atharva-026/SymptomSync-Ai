@@ -1,0 +1,193 @@
+/* src/components/family/FamilyManagementDashboard.css */
+
+.family-management-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Stats Cards */
+.stats-card {
+  border: none;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.bg-primary-soft {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+
+.bg-success-soft {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: #198754;
+}
+
+.bg-warning-soft {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+.bg-info-soft {
+  background-color: rgba(13, 202, 240, 0.1);
+  color: #0dcaf0;
+}
+
+/* Permission Cards */
+.permission-card {
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.permission-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.permission-card.border-primary {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Family Members Table */
+.family-members-table {
+  background: white;
+  border-radius: 8px;
+}
+
+.family-members-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.family-members-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.family-members-table tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* Patient Access Card */
+.patient-access-card {
+  border: none;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.patient-access-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Permission Switch */
+.permission-switch {
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  transition: background-color 0.2s;
+}
+
+.permission-switch:hover {
+  background-color: #e9ecef;
+}
+
+.permission-switch .form-check-input:checked {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-card {
+    margin-bottom: 1rem;
+  }
+
+  .family-members-table {
+    font-size: 0.875rem;
+  }
+
+  .permission-card {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Badge Styles */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 0.75em;
+}
+
+/* Modal Enhancements */
+.modal-header.bg-primary {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+/* Button Enhancements */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Alert Styles */
+.alert {
+  border-radius: 8px;
+  border: none;
+}
+
+.alert-info {
+  background-color: rgba(13, 202, 240, 0.1);
+  color: #055160;
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  color: #664d03;
+}
+
+/* Loading State */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
