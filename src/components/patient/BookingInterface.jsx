@@ -31,10 +31,21 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
   const fetchDoctors = async () => {
     try {
       setLoadingDoctors(true);
-      const data = await doctorService.getAllDoctors({ available: true });
-      setDoctors(data);
+      console.log('📞 Fetching doctors...');
+      const response = await doctorService.getAllDoctors();
+      console.log('✅ Doctors received:', response);
+      
+      // Handle both array response and object with data property
+      const doctorsList = Array.isArray(response) ? response : (response.data || []);
+      
+      setDoctors(doctorsList);
+      console.log('👨‍⚕️ Total doctors loaded:', doctorsList.length);
+      
+      if (doctorsList.length === 0) {
+        setError('No doctors available at the moment. Please try again later.');
+      }
     } catch (error) {
-      console.error('Error fetching doctors:', error);
+      console.error('❌ Error fetching doctors:', error);
       setError('Failed to load doctors. Please try again.');
     } finally {
       setLoadingDoctors(false);
@@ -43,18 +54,38 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
 
   const saveAssessment = async () => {
     try {
-      const assessment = await assessmentService.createAssessment({
-        symptoms: assessmentData.symptoms,
-        bodyPart: assessmentData.bodyPart,
-        painLevel: assessmentData.painLevel,
-        duration: assessmentData.duration,
-        additionalSymptoms: assessmentData.additionalSymptoms || [],
-        riskLevel: riskLevel,
-        isEmergency: riskLevel >= 80
-      });
-      setSavedAssessmentId(assessment._id);
+      console.log('💾 Saving assessment...', assessmentData);
+      
+      // Prepare assessment data with fallbacks for missing fields
+      const assessmentPayload = {
+        symptoms: assessmentData?.symptoms || 'General health consultation',
+        bodyPart: assessmentData?.bodyPart || null,
+        painLevel: assessmentData?.painLevel || 0,
+        duration: assessmentData?.duration || null,
+        additionalSymptoms: assessmentData?.additionalSymptoms || [],
+        riskLevel: riskLevel || 0,
+        isEmergency: (riskLevel || 0) >= 80
+      };
+
+      console.log('📤 Assessment payload:', assessmentPayload);
+      
+      const response = await assessmentService.createAssessment(assessmentPayload);
+      
+      console.log('✅ Assessment saved:', response);
+      
+      // Handle both direct response and response.data structure
+      const assessmentId = response._id || response.data?._id;
+      
+      if (assessmentId) {
+        setSavedAssessmentId(assessmentId);
+        console.log('✅ Assessment ID saved:', assessmentId);
+      } else {
+        console.warn('⚠️ No assessment ID returned');
+      }
     } catch (error) {
-      console.error('Error saving assessment:', error);
+      console.error('❌ Error saving assessment:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      // Don't block booking even if assessment save fails
     }
   };
 
@@ -73,6 +104,9 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
     }
     if (bodyPart === 'head' || symptoms.includes('head') || symptoms.includes('migraine')) {
       return 'Neurologist';
+    }
+    if (bodyPart === 'abdomen' || symptoms.includes('stomach') || symptoms.includes('abdomen')) {
+      return 'Gastroenterologist';
     }
     return 'General Physician';
   };
@@ -104,10 +138,14 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
         date: selectedDate.toISOString().split('T')[0],
         time: selectedTime,
         isUrgent: riskLevel >= 60,
-        riskLevel: riskLevel,
+        riskLevel: riskLevel || 0,
       };
 
+      console.log('📅 Creating appointment:', appointmentData);
+
       await createAppointment(appointmentData);
+
+      console.log('✅ Appointment created successfully');
 
       setIsBooking(false);
       setBookingStep('confirmed');
@@ -118,8 +156,8 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
         }, 2000);
       }
     } catch (error) {
-      console.error('Booking error:', error);
-      setError(error || 'Failed to book appointment. Please try again.');
+      console.error('❌ Booking error:', error);
+      setError(error.message || 'Failed to book appointment. Please try again.');
       setIsBooking(false);
     }
   };
@@ -204,7 +242,7 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
           Schedule Doctor Consultation
         </h3>
 
-        {error && <Alert variant="danger">{error}</Alert>}
+        {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
 
         {riskLevel >= 60 && (
           <Alert variant="warning" className="mb-4">
@@ -213,27 +251,48 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
           </Alert>
         )}
 
-        <Alert variant="info" className="mb-4">
-          <strong>💡 AI Recommendation:</strong> Consider seeing a{' '}
-          <strong>{recommendedSpecialty}</strong> for your symptoms.
-        </Alert>
+        {recommendedSpecialty && (
+          <Alert variant="info" className="mb-4">
+            <strong>💡 AI Recommendation:</strong> Consider seeing a{' '}
+            <strong>{recommendedSpecialty}</strong> for your symptoms.
+          </Alert>
+        )}
 
-        <Card className="bg-light mb-4">
-          <Card.Body>
-            <h6 className="mb-2">Your Assessment Summary:</h6>
-            <p className="mb-1 small"><strong>Symptoms:</strong> {assessmentData?.symptoms}</p>
-            <p className="mb-1 small"><strong>Location:</strong> {assessmentData?.bodyPart?.name}</p>
-            <p className="mb-1 small"><strong>Pain Level:</strong> {assessmentData?.painLevel}/10</p>
-            <p className="mb-0 small"><strong>Duration:</strong> {assessmentData?.duration?.amount} {assessmentData?.duration?.unit}</p>
-          </Card.Body>
-        </Card>
+        {assessmentData && (
+          <Card className="bg-light mb-4">
+            <Card.Body>
+              <h6 className="mb-2">Your Assessment Summary:</h6>
+              <p className="mb-1 small">
+                <strong>Symptoms:</strong> {assessmentData.symptoms || 'General consultation'}
+              </p>
+              {assessmentData.bodyPart && (
+                <p className="mb-1 small">
+                  <strong>Location:</strong> {assessmentData.bodyPart.name}
+                </p>
+              )}
+              {assessmentData.painLevel && (
+                <p className="mb-1 small">
+                  <strong>Pain Level:</strong> {assessmentData.painLevel}/10
+                </p>
+              )}
+              {assessmentData.duration && (
+                <p className="mb-0 small">
+                  <strong>Duration:</strong> {assessmentData.duration.amount} {assessmentData.duration.unit}
+                </p>
+              )}
+            </Card.Body>
+          </Card>
+        )}
 
         {bookingStep === 'select-doctor' && (
           <>
             <h5 className="h6 mb-3">Available Doctors ({doctors.length}):</h5>
             {doctors.length === 0 ? (
               <Alert variant="warning">
-                No doctors available at the moment. Please try again later.
+                <p className="mb-2">No doctors available at the moment.</p>
+                <Button variant="outline-warning" size="sm" onClick={fetchDoctors}>
+                  🔄 Retry Loading Doctors
+                </Button>
               </Alert>
             ) : (
               <Row className="g-3">
@@ -258,12 +317,14 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
                           </Col>
                           <Col xs={9}>
                             <h6 className="mb-1 fw-bold">{doctor.name}</h6>
-                            <p className="mb-1 small text-muted">{doctor.specialty}</p>
+                            <p className="mb-1 small text-muted">{doctor.specialty || 'General Physician'}</p>
                             <div className="d-flex align-items-center gap-2 mb-2">
                               <Badge bg="warning" text="dark">
                                 ⭐ {doctor.rating || 4.5}
                               </Badge>
-                              <span className="small text-muted">{doctor.experience}</span>
+                              <span className="small text-muted">
+                                {doctor.experience ? `${doctor.experience} years` : '5+ years'}
+                              </span>
                             </div>
                             <div className="d-flex justify-content-between align-items-center">
                               <Badge bg="success">Available</Badge>

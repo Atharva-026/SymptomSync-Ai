@@ -8,7 +8,8 @@ const assessmentSchema = new mongoose.Schema({
   },
   symptoms: {
     type: String,
-    required: true
+    required: false, // CHANGED: Make it optional
+    default: 'General health consultation' // ADDED: Default value
   },
   bodyPart: {
     id: String,
@@ -17,7 +18,7 @@ const assessmentSchema = new mongoose.Schema({
   },
   painLevel: {
     type: Number,
-    min: 1,
+    min: 0,
     max: 10
   },
   duration: {
@@ -27,12 +28,9 @@ const assessmentSchema = new mongoose.Schema({
   additionalSymptoms: [{
     type: String
   }],
-  followUpAnswers: {
-    type: Map,
-    of: String
-  },
   riskLevel: {
     type: Number,
+    default: 0,
     min: 0,
     max: 100
   },
@@ -40,17 +38,12 @@ const assessmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  recommendation: {
-    severity: String,
-    title: String,
-    description: String,
-    actions: [String],
-    tips: [String]
-  },
   createdAt: {
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Assessment', assessmentSchema);

@@ -1,25 +1,24 @@
 import api from './api';
 
 const doctorService = {
-  getAllDoctors: async (filters = {}) => {
+  getAllDoctors: async (params) => {
     try {
-      const params = new URLSearchParams();
-      if (filters.specialty) params.append('specialty', filters.specialty);
-      if (filters.available !== undefined) params.append('available', filters.available);
-
-      const response = await api.get(`/doctors?${params.toString()}`);
-      return response.data.data;
+      const response = await api.get('/doctors', { params });
+      // Return the data array directly
+      return response.data.data || response.data || [];
     } catch (error) {
-      throw error.response?.data?.message || 'Failed to fetch doctors';
+      console.error('Error fetching doctors:', error);
+      throw error;
     }
   },
 
-  getDoctor: async (doctorId) => {
+  getDoctor: async (id) => {
     try {
-      const response = await api.get(`/doctors/${doctorId}`);
-      return response.data.data;
+      const response = await api.get(`/doctors/${id}`);
+      return response.data.data || response.data;
     } catch (error) {
-      throw error.response?.data?.message || 'Failed to fetch doctor';
+      console.error('Error fetching doctor:', error);
+      throw error;
     }
   }
 };
