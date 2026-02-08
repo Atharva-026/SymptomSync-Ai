@@ -16,6 +16,9 @@ import Register from './components/auth/Register';
 import FamilyAccessPage from './pages/FamilyAccessPage';
 import ManagePatientPage from './pages/ManagePatientPage';
 
+// NEW: About Page
+import AboutPage from './pages/AboutPage';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import { tamboComponents, tamboTools, systemPrompt } from './config/tamboConfig';
@@ -44,6 +47,9 @@ function AppContent() {
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
       <Route path="/register" element={!user ? <Register /> : <Navigate to="/" replace />} />
       <Route path="/records/view/:token" element={<ViewSharedRecord />} />
+      
+      {/* NEW: About Route (Public) */}
+      <Route path="/about" element={<AboutPage />} />
       
       {/* Patient Dashboards */}
       <Route path="/patient" element={<ProtectedRoute requiredUserType="patient"><PatientDashboard /></ProtectedRoute>} />

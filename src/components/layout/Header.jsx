@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, Container, Button, Nav } from 'react-bootstrap';
-import { FaHeartbeat, FaCalendarCheck, FaUserFriends } from 'react-icons/fa';
+import { FaHeartbeat, FaCalendarCheck, FaUserFriends, FaInfoCircle } from 'react-icons/fa';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Header = () => {
@@ -38,6 +38,12 @@ const Header = () => {
         
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto align-items-center">
+            {/* NEW: About Link */}
+            <Nav.Link as={Link} to="/about" className="text-white me-3 d-flex align-items-center">
+              <FaInfoCircle className="me-2" />
+              About
+            </Nav.Link>
+
             {/* NEW: Family Access Link */}
             <Nav.Link as={Link} to="/family-access" className="text-white me-4 d-flex align-items-center">
               <FaUserFriends className="me-2" />
