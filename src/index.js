@@ -10,20 +10,7 @@ import ErrorBoundary from './components/shared/ErrorBoundary';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
+  
       <App />
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-    </ErrorBoundary>
-  </React.StrictMode>
+     
 );

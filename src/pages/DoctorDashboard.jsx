@@ -9,7 +9,7 @@ import PatientDetailsModal from '../components/doctor/PatientDetailsModal';
 import VideoRoom from '../components/video/VideoRoom';
 import QRScannerModal from '../components/medical/QRScanner';
 import ScannedRecordView from '../components/medical/ScannedRecordView';
-import dailyAPI from '../utils/dailyAPI';
+import videoService from '../utils/videoService';
 import appointmentService from '../services/appointmentService';
 
 const DoctorDashboard = () => {
@@ -47,7 +47,7 @@ const DoctorDashboard = () => {
       console.log('🎥 Starting call for appointment:', appointment._id);
       
       // Create unique Daily.co room
-      const room = await dailyAPI.createRoom(appointment._id);
+      const room = await videoService.createRoom(appointment._id);
       console.log('✅ Room created:', room);
       
       // Update appointment status and room URL in backend

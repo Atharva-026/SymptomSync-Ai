@@ -17,7 +17,7 @@ import BookingInterface from '../components/patient/BookingInterface';
 import VideoRoom from '../components/video/VideoRoom';
 import Header from '../components/layout/Header';
 import tamboService from '../utils/tamboService';
-import dailyAPI from '../utils/dailyAPI';
+import videoService from '../utils/videoService';
 import appointmentService from '../services/appointmentService';
 
 // NEW: Tambo Assessment Component
@@ -360,7 +360,7 @@ const PatientDashboard = () => {
 
   const startVideoCall = async (appointment) => {
     try {
-      const room = await dailyAPI.createRoom(appointment._id);
+      const room = await videoService.createRoom(appointment._id);
       setVideoRoomUrl(room.url);
       setActiveAppointment(appointment);
       setView('video');
