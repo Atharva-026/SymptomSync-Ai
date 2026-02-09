@@ -1,70 +1,67 @@
-# Getting Started with Create React App
+🩺 SymptomSync AI
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+SymptomSync AI is an intelligent healthcare assistance platform designed to help users understand symptoms, receive AI-driven guidance, and improve early awareness of potential health conditions through a conversational interface.
 
-## Available Scripts
+The project focuses on simplifying preliminary symptom analysis using modern web technologies and AI, making healthcare guidance more accessible, interactive, and user-friendly.
 
-In the project directory, you can run:
+🚀 Project Overview
 
-### `npm start`
+SymptomSync AI allows users to describe their symptoms in natural language and receive meaningful, AI-powered responses. The system provides structured feedback, helpful suggestions, and an intuitive experience for users seeking quick health insights.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The application is built with a scalable architecture and integrates AI conversational capabilities to enhance user engagement and understanding.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+✨ Key Features
 
-### `npm test`
+🤖 AI-Powered Symptom Analysis using conversational input
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+💬 Interactive Chat Interface for natural user interaction
 
-### `npm run build`
+🧠 Tambo AI Integration (Latest v10) for real-time intelligent responses
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+📊 Judge Feedback System to collect structured evaluations
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+⚡ Fast & Responsive UI for smooth user experience
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+🔒 Secure API-based Communication
 
-### `npm run eject`
+🛠️ Tech Stack
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Frontend: React, JavaScript, HTML, CSS
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Backend: Node.js, Express
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+AI Integration: Tambo AI (v10)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Database: MongoDB
 
-## Learn More
+Tools: Thunder Client, Google Forms
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+🤝 Use of Tambo AI (v10)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The project integrates Tambo AI (latest v10) to power conversational intelligence within the application.
+Tambo enables real-time AI responses, understands user-provided symptoms, and improves interaction quality by delivering accurate, contextual, and human-like guidance.
 
-### Code Splitting
+📋 Feedback & Evaluation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+We highly value feedback from judges and reviewers.
+Please share your thoughts using the feedback form below:
 
-### Analyzing the Bundle Size
+👉 Feedback Form:
+https://forms.gle/RAAPQFWLj7JssCAGA
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+📌 Project Goal
 
-### Making a Progressive Web App
+To bridge the gap between users and preliminary healthcare guidance by providing a smart, AI-assisted platform that is easy to use, informative, and accessible.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+👨‍💻 Developer
 
-### Advanced Configuration
+Atharva Naik
+📧 Email: atharvanaik026@gmail.com
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+🔗 GitHub: https://github.com/Atharva-026
 
-### Deployment
+🔗 LinkedIn: https://www.linkedin.com/in/atharva-naik-69967939a
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+⭐ Final Note
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+SymptomSync AI is built with the vision of combining AI innovation and practical healthcare awareness. The project demonstrates how conversational AI can play a meaningful role in modern digital health solutions.
