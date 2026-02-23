@@ -11,7 +11,9 @@ const TamboBodyDiagram = () => {
     const message = `I selected ${bodyPart.emoji || ''} ${bodyPart.name} as the affected area`;
     setValue(message);
     setTimeout(() => {
-      submit();
+      submit().catch((error) => {
+        console.error('❌ Tambo submit failed:', error);
+      });
     }, 100); // Increased delay
   };
 

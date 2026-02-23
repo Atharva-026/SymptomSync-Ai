@@ -6,6 +6,7 @@ import { Card, Form, Button, Spinner, Badge, Alert } from 'react-bootstrap';
 import { FaRobot, FaPaperPlane, FaUser, FaCalendarAlt } from 'react-icons/fa';
 import { useTamboThread, useTamboThreadInput } from '@tambo-ai/react';
 import { useNavigate } from 'react-router-dom';
+import formatMedicalResponse from '../../utils/responseFormatter';
 
 const TamboAssessment = () => {
   const navigate = useNavigate();
@@ -16,10 +17,89 @@ const TamboAssessment = () => {
   const [showBookingButton, setShowBookingButton] = useState(false);
   const [assessmentComplete, setAssessmentComplete] = useState(false);
 
+  // Helper function to render formatted medical text with bold colored headings
+  const renderFormattedText = (text) => {
+    const lines = text.split('\n');
+    const content = [];
+    
+    // List of heading keywords to highlight in bold blue
+    const headingKeywords = [
+      'RISK ASSESSMENT',
+      'PROBLEM DESCRIPTION',
+      'ASSOCIATED SYMPTOMS',
+      'HOME TREATMENT',
+      'WHEN TO SEEK MEDICAL HELP',
+      'CLARIFYING QUESTIONS'
+    ];
+    
+    lines.forEach((line, idx) => {
+      const trimmedLine = line.trim();
+      const upperLine = trimmedLine.toUpperCase();
+      
+      // Check if this line contains any heading keyword
+      let isHeadingLine = false;
+      let headingKeywordFound = '';
+      
+      for (let keyword of headingKeywords) {
+        if (upperLine.includes(keyword)) {
+          isHeadingLine = true;
+          headingKeywordFound = keyword;
+          break;
+        }
+      }
+      
+      if (isHeadingLine && headingKeywordFound) {
+        // Find the position of the keyword in the original line
+        const keywordIndex = upperLine.indexOf(headingKeywordFound);
+        const beforeKeyword = trimmedLine.substring(0, keywordIndex);
+        const actualKeyword = trimmedLine.substring(keywordIndex, keywordIndex + headingKeywordFound.length);
+        const afterKeyword = trimmedLine.substring(keywordIndex + headingKeywordFound.length);
+        
+        // Render the line with keyword styled
+        content.push(
+          <span 
+            key={`heading-${idx}`} 
+            style={{ 
+              display: 'block', 
+              marginTop: '16px', 
+              marginBottom: '8px',
+              fontSize: '1em',
+              letterSpacing: '0.2px',
+              paddingTop: '4px',
+              paddingBottom: '4px'
+            }}
+          >
+            <span>{beforeKeyword}</span>
+            <span style={{ fontWeight: 'bold', color: '#0056b3' }}>
+              {actualKeyword}
+            </span>
+            <span>{afterKeyword}</span>
+          </span>
+        );
+      } else if (trimmedLine === '') {
+        content.push(
+          <span key={`empty-${idx}`} style={{ display: 'block', height: '3px' }}>
+            &nbsp;
+          </span>
+        );
+      } else {
+        content.push(
+          <span key={`line-${idx}`} style={{ display: 'block', lineHeight: '1.6', marginLeft: '0px' }}>
+            {line}
+          </span>
+        );
+      }
+    });
+    
+    return <div style={{ padding: '4px' }}>{content}</div>;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (value.trim() && !isPending) {
-      submit();
+      submit().catch((error) => {
+        console.error('❌ Streaming submit failed:', error);
+      });
       setValue('');
     }
   };
@@ -210,6 +290,9 @@ const TamboAssessment = () => {
                       {Array.isArray(message.content) ? (
                         message.content.map((part, i) => {
                           if (part.type === 'text' && part.text) {
+                            const textContent = message.role === 'assistant' 
+                              ? formatMedicalResponse(part.text) 
+                              : part.text;
                             return (
                               <div 
                                 key={i} 
@@ -218,8 +301,14 @@ const TamboAssessment = () => {
                                     ? 'bg-primary text-white' 
                                     : 'bg-white border shadow-sm'
                                 }`}
+                                style={{
+                                  wordWrap: 'break-word',
+                                  lineHeight: '1.6'
+                                }}
                               >
-                                {part.text}
+                                {message.role === 'assistant' && typeof textContent === 'string'
+                                  ? renderFormattedText(textContent)
+                                  : textContent}
                               </div>
                             );
                           }
@@ -232,8 +321,14 @@ const TamboAssessment = () => {
                               ? 'bg-primary text-white' 
                               : 'bg-white border shadow-sm'
                           }`}
+                          style={{
+                            wordWrap: 'break-word',
+                            lineHeight: '1.6'
+                          }}
                         >
-                          {message.content}
+                          {message.role === 'assistant'
+                            ? renderFormattedText(formatMedicalResponse(message.content))
+                            : message.content}
                         </div>
                       ) : null}
 

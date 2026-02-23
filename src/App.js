@@ -103,10 +103,8 @@ function App() {
               apiKey={tamboKey}
               components={tamboComponents}
               tools={tamboTools}
+              streaming={true}
               systemPrompt={systemPrompt}
-              model="claude-3-5-sonnet-20241022"
-              streamResponse={true}
-              maxTokens={2000}
             >
               <AppContent />
             </TamboProvider>

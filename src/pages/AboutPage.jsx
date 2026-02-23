@@ -3,6 +3,8 @@ import { Container, Row, Col, Card, Badge } from 'react-bootstrap';
 import { FaRobot, FaShieldAlt, FaVideo, FaUsers, FaFileMedical, FaCode, FaCheckCircle } from 'react-icons/fa';
 
 const AboutPage = () => {
+  const feedbackLink = "https://forms.gle/RAAPQFWLj7JssCAGA";
+  
   const techStack = {
     Frontend: ["React 19", "React Router", "Bootstrap 5", "Tambo AI SDK", "Socket.io Client"],
     Backend: ["Node.js", "Express.js", "MongoDB", "Google Gemini AI", "Jitsi API", "Nodemailer"]
@@ -17,6 +19,22 @@ const AboutPage = () => {
           <p className="lead opacity-90 mx-auto" style={{ maxWidth: '800px' }}>
             An Intelligent Telemedicine Platform bridging the gap between patients, doctors, and caregivers through AI-powered diagnostics and real-time care.
           </p>
+          
+          {/* Feedback Link */}
+          <div className="mt-4">
+            <p className="mb-1 text-muted">
+              Help us improve our platform by providing user feedback at:
+            </p>
+            <a 
+              href={feedbackLink} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-info fw-bold text-decoration-underline"
+              style={{ wordBreak: 'break-all' }}
+            >
+              {feedbackLink}
+            </a>
+          </div>
         </Container>
       </div>
 

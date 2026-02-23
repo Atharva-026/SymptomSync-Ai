@@ -11,7 +11,9 @@ const TamboPainScale = () => {
     const message = `My pain level is ${painLevel} out of 10`;
     setValue(message);
     setTimeout(() => {
-      submit();
+      submit().catch((error) => {
+        console.error('❌ Tambo submit failed:', error);
+      });
     }, 100);
   };
 

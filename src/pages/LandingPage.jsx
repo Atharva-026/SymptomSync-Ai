@@ -3,7 +3,7 @@ import { Container, Row, Col, Button, Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { 
   FaUserMd, FaUserInjured, FaVideo, FaChartLine, 
-  FaShieldAlt, FaRobot, FaUsers, FaFileMedical, FaCode, FaExternalLinkAlt 
+  FaShieldAlt, FaRobot, FaUsers, FaFileMedical, FaExternalLinkAlt 
 } from 'react-icons/fa';
 import Header from '../components/layout/Header';
 
@@ -136,18 +136,6 @@ const LandingPage = () => {
               SymptomSync AI is a full-stack, AI-powered platform designed to bridge the gap 
               between patients, doctors, and caregivers.
             </p>
-            {/* Feedback Link visible in the text body with Raw URL */}
-            <p className="mb-1 text-muted">
-              Help us improve our platform by providing user feedback at:
-            </p>
-            <a 
-              href={feedbackLink} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="text-info fw-bold text-decoration-underline break-all"
-            >
-              {feedbackLink}
-            </a>
           </div>
 
           <Row className="g-4 mb-5">
@@ -176,39 +164,6 @@ const LandingPage = () => {
               </Col>
             ))}
           </Row>
-
-          <Card className="shadow-sm border-0 overflow-hidden mt-5">
-            <Row className="g-0">
-              <Col lg={4} className="bg-primary text-white p-5 d-flex align-items-center justify-content-center text-center">
-                <div>
-                  <FaCode size={50} className="mb-3" />
-                  <h3 className="fw-bold">Technology Stack</h3>
-                </div>
-              </Col>
-              <Col lg={8} className="p-4 bg-light">
-                <Row>
-                  <Col sm={6} className="mb-3">
-                    <h6 className="fw-bold text-primary">FRONTEND</h6>
-                    <ul className="list-unstyled small text-muted">
-                      <li>React 19 & React Router</li>
-                      <li>Tambo AI React SDK</li>
-                      <li>Bootstrap 5 & React-Bootstrap</li>
-                      <li>Socket.io Client</li>
-                    </ul>
-                  </Col>
-                  <Col sm={6}>
-                    <h6 className="fw-bold text-primary">BACKEND</h6>
-                    <ul className="list-unstyled small text-muted">
-                      <li>Node.js & Express.js</li>
-                      <li>MongoDB & Mongoose</li>
-                      <li>Google Gemini AI</li>
-                      <li>Jitsi Video API & Nodemailer</li>
-                    </ul>
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card>
         </Container>
       </div>
 

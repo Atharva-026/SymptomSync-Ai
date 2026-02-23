@@ -11,7 +11,9 @@ const TamboDurationPicker = () => {
     const message = `I've had these symptoms for ${duration.amount} ${duration.unit}`;
     setValue(message);
     setTimeout(() => {
-      submit();
+      submit().catch((error) => {
+        console.error('❌ Tambo submit failed:', error);
+      });
     }, 100);
   };
 
