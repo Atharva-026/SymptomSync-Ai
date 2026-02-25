@@ -257,7 +257,14 @@ exports.shareWithDoctor = async (req, res) => {
 // @route   POST /api/medical-records/:id/analyze
 // @access  Private
 exports.analyzeRecord = async (req, res) => {
+  console.log('========================================');
+  console.log('🎯 analyzeRecord ENDPOINT CALLED');
+  console.log('Record ID:', req.params.id);
+  console.log('User ID:', req.user?.id);
+  console.log('========================================');
+  
   try {
+    // ... rest of your code
     const record = await MedicalRecord.findById(req.params.id);
 
     if (!record) {
