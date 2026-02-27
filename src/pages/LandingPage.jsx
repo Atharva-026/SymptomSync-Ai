@@ -1,196 +1,271 @@
 import React from 'react';
-import { Container, Row, Col, Button, Card, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { 
   FaUserMd, FaUserInjured, FaVideo, FaChartLine, 
-  FaShieldAlt, FaRobot, FaUsers, FaFileMedical, FaExternalLinkAlt 
+  FaShieldAlt, FaRobot, FaHeartbeat, FaCalendarAlt,
+  FaQrcode, FaBell, FaStethoscope
 } from 'react-icons/fa';
 import Header from '../components/layout/Header';
 
 const LandingPage = () => {
-  const feedbackLink = "https://forms.gle/RAAPQFWLj7JssCAGA";
-
   const features = [
-    { icon: <FaRobot />, title: "AI Assessment", desc: "Conversational symptom analysis using Tambo AI SDK and structured follow-ups." },
-    { icon: <FaUsers />, title: "Family Access", desc: "Caregiver support system with permission-based access to patient records." },
-    { icon: <FaVideo />, title: "Video Consult", desc: "Low-latency, secure consultations powered by Jitsi Video API." },
-    { icon: <FaFileMedical />, title: "Secure Records", desc: "QR-code based sharing and tokenized access for medical reports." },
-    { icon: <FaShieldAlt />, title: "Intelligent Risk", desc: "Real-time urgency categorization (Emergency to Low) based on symptoms." },
-    { icon: <FaExternalLinkAlt />, title: "Project Feedback", desc: "We value your input! Share your experience with us at the link below.", isFeedback: true }
+    { 
+      icon: <FaRobot />, 
+      title: "AI Symptom Analysis", 
+      desc: "Conversational AI engine analyzes symptoms through natural language and generates risk scores",
+      color: "#10b981"
+    },
+    { 
+      icon: <FaChartLine />, 
+      title: "Risk Assessment", 
+      desc: "Real-time severity classification from low to emergency with intelligent prioritization",
+      color: "#3b82f6"
+    },
+    { 
+      icon: <FaVideo />, 
+      title: "Video Consultations", 
+      desc: "HD video calls with doctors powered by secure Jitsi API integration",
+      color: "#8b5cf6"
+    },
+    { 
+      icon: <FaQrcode />, 
+      title: "Smart Medical Records", 
+      desc: "QR code-based secure sharing with AI analysis of X-rays and lab reports",
+      color: "#f59e0b"
+    },
+    { 
+      icon: <FaCalendarAlt />, 
+      title: "Smart Scheduling", 
+      desc: "Automatic appointment booking based on AI risk assessment results",
+      color: "#ec4899"
+    },
+    { 
+      icon: <FaBell />, 
+      title: "Real-time Alerts", 
+      desc: "Email notifications for appointments, assessments, and emergency situations",
+      color: "#06b6d4"
+    }
   ];
 
   return (
-    <div>
+    <div className="landing-page">
       <Header />
       
       {/* Hero Section */}
-      <div className="bg-primary text-white py-5">
+      <div className="hero-section-landing">
         <Container>
-          <Row className="align-items-center">
+          <Row className="align-items-center min-vh-75">
             <Col lg={6} className="py-5">
-              <h1 className="display-3 fw-bold mb-4">SymptomSync AI</h1>
-              <p className="lead mb-4">
-                AI-powered symptom assessment with real video consultations. 
-                Get expert medical advice from anywhere, anytime.
+              <div className="hero-badge mb-3">
+                <span className="badge-pulse"></span>
+                AI-Powered Healthcare
+              </div>
+              <h1 className="hero-title-landing">
+                Smart Healthcare,
+                <br />
+                <span className="text-gradient">Right at Your Fingertips</span>
+              </h1>
+              <p className="hero-description">
+                Experience intelligent symptom assessment with real-time AI analysis, 
+                instant risk scoring, and seamless video consultations with qualified doctors.
               </p>
-              <div className="d-flex gap-3">
-                <Button as={Link} to="/register" variant="light" size="lg">
-                  Get Started
+              <div className="hero-stats mb-4">
+                <div className="stat-item">
+                  <FaStethoscope className="stat-icon" />
+                  <div>
+                    <div className="stat-number">24/7</div>
+                    <div className="stat-label">Availability</div>
+                  </div>
+                </div>
+                <div className="stat-divider"></div>
+                <div className="stat-item">
+                  <FaHeartbeat className="stat-icon" />
+                  <div>
+                    <div className="stat-number">AI-Powered</div>
+                    <div className="stat-label">Risk Analysis</div>
+                  </div>
+                </div>
+              </div>
+              <div className="d-flex gap-3 flex-wrap">
+                <Button as={Link} to="/register" className="btn-hero-primary">
+                  Get Started Free
                 </Button>
-                <Button as={Link} to="/login" variant="outline-light" size="lg">
-                  Login
+                <Button as={Link} to="/about" className="btn-hero-secondary">
+                  Learn More
                 </Button>
               </div>
             </Col>
             <Col lg={6} className="text-center">
-              <div style={{ fontSize: '15rem' }}>🏥</div>
+              <div className="hero-illustration">
+                <div className="floating-card card-1">
+                  <FaRobot size={30} className="text-primary" />
+                  <div className="ms-3">
+                    <div className="fw-bold">AI Analysis</div>
+                    <small className="text-muted">Real-time assessment</small>
+                  </div>
+                </div>
+                <div className="floating-card card-2">
+                  <FaVideo size={30} className="text-success" />
+                  <div className="ms-3">
+                    <div className="fw-bold">Video Call</div>
+                    <small className="text-muted">Connect with doctors</small>
+                  </div>
+                </div>
+                <div className="floating-card card-3">
+                  <FaShieldAlt size={30} className="text-danger" />
+                  <div className="ms-3">
+                    <div className="fw-bold">Secure</div>
+                    <small className="text-muted">HIPAA compliant</small>
+                  </div>
+                </div>
+                <div className="hero-emoji">🏥</div>
+              </div>
             </Col>
           </Row>
         </Container>
       </div>
 
-      {/* High Level Features */}
-      <Container className="py-5">
-        <h2 className="text-center mb-5">Why Choose SymptomSync AI?</h2>
+      {/* Features Section */}
+      <Container className="py-5 my-5">
+        <div className="text-center mb-5">
+          <h2 className="section-title-landing">Why Choose SymptomSync AI?</h2>
+          <p className="section-subtitle">
+            Advanced AI technology meets compassionate healthcare
+          </p>
+        </div>
         <Row className="g-4">
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm text-center p-4">
-              <Card.Body>
-                <FaChartLine size={48} className="text-primary mb-3" />
-                <h5>AI Assessment</h5>
-                <p className="text-muted">
-                  Advanced AI analyzes your symptoms and provides risk assessment in real-time
-                </p>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm text-center p-4">
-              <Card.Body>
-                <FaVideo size={48} className="text-success mb-3" />
-                <h5>Video Consultations</h5>
-                <p className="text-muted">
-                  Connect with qualified doctors via HD video calls from the comfort of your home
-                </p>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm text-center p-4">
-              <Card.Body>
-                <FaShieldAlt size={48} className="text-danger mb-3" />
-                <h5>Secure & Private</h5>
-                <p className="text-muted">
-                  Your medical data is encrypted and protected with industry-standard security
-                </p>
-              </Card.Body>
-            </Card>
-          </Col>
+          {features.map((feature, idx) => (
+            <Col md={6} lg={4} key={idx}>
+              <Card className="feature-card-landing h-100">
+                <Card.Body className="p-4">
+                  <div 
+                    className="feature-icon-wrapper mb-3" 
+                    style={{ backgroundColor: `${feature.color}15` }}
+                  >
+                    <div style={{ color: feature.color, fontSize: '2rem' }}>
+                      {feature.icon}
+                    </div>
+                  </div>
+                  <h5 className="feature-title-landing">{feature.title}</h5>
+                  <p className="feature-desc-landing">{feature.desc}</p>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
         </Row>
       </Container>
 
       {/* How It Works */}
-      <div className="bg-light py-5">
-        <Container>
-          <h2 className="text-center mb-5">How It Works</h2>
-          <Row>
-            <Col md={6} className="mb-4">
-              <Card className="border-primary h-100 shadow-sm">
-                <Card.Body className="p-4">
-                  <FaUserInjured size={40} className="text-primary mb-3" />
-                  <h4>For Patients</h4>
-                  <ol className="ps-3">
-                    <li className="mb-2">Describe your symptoms naturally</li>
-                    <li className="mb-2">AI assesses your condition and risk level</li>
-                    <li className="mb-2">Book appointment with recommended specialist</li>
-                    <li className="mb-2">Join video consultation at scheduled time</li>
-                  </ol>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={6} className="mb-4">
-              <Card className="border-success h-100 shadow-sm">
-                <Card.Body className="p-4">
-                  <FaUserMd size={40} className="text-success mb-3" />
-                  <h4>For Doctors</h4>
-                  <ol className="ps-3">
-                    <li className="mb-2">Receive patient appointment requests</li>
-                    <li className="mb-2">Review AI-generated assessment reports</li>
-                    <li className="mb-2">Conduct video consultations</li>
-                    <li className="mb-2">Provide prescriptions and follow-up care</li>
-                  </ol>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
-      </div>
-
-      {/* ABOUT SECTION - THE PROJECT SHOWCASE */}
-      <div id="about" className="py-5 bg-white">
+      <div className="how-it-works-section">
         <Container>
           <div className="text-center mb-5">
-            <Badge bg="info" className="mb-2 px-3 py-2 rounded-pill text-white">PROJECT SHOWCASE</Badge>
-            <h2 className="display-5 fw-bold mb-4">Intelligent Telemedicine Platform</h2>
-            <p className="lead text-muted mx-auto mb-3" style={{ maxWidth: '900px' }}>
-              SymptomSync AI is a full-stack, AI-powered platform designed to bridge the gap 
-              between patients, doctors, and caregivers.
+            <h2 className="section-title-landing text-white">How It Works</h2>
+            <p className="section-subtitle text-white-50">
+              Simple, fast, and secure healthcare journey
             </p>
           </div>
-
-          <Row className="g-4 mb-5">
-            {features.map((f, i) => (
-              <Col md={4} key={i}>
-                <Card className="h-100 shadow-sm border-0 feature-card p-3">
-                  <Card.Body>
-                    <div className="text-primary mb-3" style={{ fontSize: '2rem' }}>{f.icon}</div>
-                    <h5 className="fw-bold">{f.title}</h5>
-                    <Card.Text className="text-muted small mb-3">{f.desc}</Card.Text>
-                    {f.isFeedback && (
-                      <div className="mt-auto">
-                        <a 
-                          href={feedbackLink} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="text-info small fw-bold text-decoration-none d-block overflow-hidden"
-                          style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                        >
-                          {feedbackLink} <FaExternalLinkAlt size={10} />
-                        </a>
-                      </div>
-                    )}
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+          <Row>
+            <Col md={6} className="mb-4">
+              <Card className="process-card">
+                <Card.Body className="p-4">
+                  <div className="process-icon patient-icon">
+                    <FaUserInjured size={40} />
+                  </div>
+                  <h4 className="mb-3">For Patients</h4>
+                  <div className="process-steps">
+                    <div className="process-step">
+                      <span className="step-number">1</span>
+                      <span className="step-text">Describe symptoms naturally to AI</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">2</span>
+                      <span className="step-text">Get instant risk assessment</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">3</span>
+                      <span className="step-text">Book appointment with specialist</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">4</span>
+                      <span className="step-text">Join video consultation</span>
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6} className="mb-4">
+              <Card className="process-card">
+                <Card.Body className="p-4">
+                  <div className="process-icon doctor-icon">
+                    <FaUserMd size={40} />
+                  </div>
+                  <h4 className="mb-3">For Doctors</h4>
+                  <div className="process-steps">
+                    <div className="process-step">
+                      <span className="step-number">1</span>
+                      <span className="step-text">Receive AI-analyzed patient requests</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">2</span>
+                      <span className="step-text">Review comprehensive assessment</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">3</span>
+                      <span className="step-text">Conduct video consultations</span>
+                    </div>
+                    <div className="process-step">
+                      <span className="step-number">4</span>
+                      <span className="step-text">Provide care and follow-up</span>
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
           </Row>
         </Container>
       </div>
 
-      {/* CTA */}
-      <Container className="py-5 text-center">
-        <h2 className="mb-4">Ready to Get Started?</h2>
-        <p className="lead text-muted mb-4">
-          Join thousands of patients and doctors using SymptomSync AI
-        </p>
-        <Button as={Link} to="/register" variant="primary" size="lg" className="px-5 shadow">
-          Create Free Account
-        </Button>
+      {/* CTA Section */}
+      <Container className="py-5 my-5">
+        <Card className="cta-card">
+          <Card.Body className="p-5 text-center">
+            <h2 className="cta-title">Ready to Experience Smart Healthcare?</h2>
+            <p className="cta-subtitle">
+              Join thousands using AI-powered symptom assessment and video consultations
+            </p>
+            <Button as={Link} to="/register" className="btn-cta">
+              Create Free Account
+              <span className="ms-2">→</span>
+            </Button>
+          </Card.Body>
+        </Card>
       </Container>
 
       {/* Footer */}
-      <div className="bg-dark text-white py-4">
+      <footer className="footer-landing">
         <Container>
-          <Row>
+          <Row className="align-items-center">
             <Col md={6}>
-              <p className="mb-0">© 2026 SymptomSync AI. All rights reserved.</p>
+              <div className="d-flex align-items-center mb-3 mb-md-0">
+                <FaHeartbeat size={24} className="me-2" />
+                <span className="fw-bold">SymptomSync AI</span>
+              </div>
+              <p className="text-white-50 small mb-0">
+                © 2026 SymptomSync AI. All rights reserved.
+              </p>
             </Col>
             <Col md={6} className="text-md-end">
-              <p className="mb-0">Built for healthcare innovation</p>
+              <p className="text-white-50 small mb-2">
+                Built for healthcare innovation
+              </p>
+              <Link to="/about" className="footer-link">About</Link>
+              <span className="mx-2 text-white-50">•</span>
+              <Link to="/register" className="footer-link">Get Started</Link>
             </Col>
           </Row>
         </Container>
-      </div>
+      </footer>
     </div>
   );
 };

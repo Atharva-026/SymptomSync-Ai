@@ -2,21 +2,19 @@ import React from 'react';
 import { Navbar, Container, Button, Nav } from 'react-bootstrap';
 import { FaHeartbeat, FaCalendarCheck, FaUserFriends, FaInfoCircle } from 'react-icons/fa';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const handleBookClick = () => {
-    // If user is already on the patient dashboard, we want to trigger the assessment view
     if (location.pathname === '/patient') {
-      // This is a custom event to tell the PatientDashboard to open the assessment
       const event = new CustomEvent('trigger-assessment');
       window.dispatchEvent(event);
     } else {
-      // If elsewhere, navigate to the patient page
       navigate('/patient');
-      // Optional: Trigger assessment after navigation
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('trigger-assessment'));
       }, 500);
@@ -38,27 +36,52 @@ const Header = () => {
         
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto align-items-center">
-            {/* NEW: About Link */}
+            {/* Always show About link */}
             <Nav.Link as={Link} to="/about" className="text-white me-3 d-flex align-items-center">
               <FaInfoCircle className="me-2" />
               About
             </Nav.Link>
 
-            {/* NEW: Family Access Link */}
-            <Nav.Link as={Link} to="/family-access" className="text-white me-4 d-flex align-items-center">
-              <FaUserFriends className="me-2" />
-              Family Access
-            </Nav.Link>
+            {/* Only show these when user is logged in */}
+            {user && (
+              <>
+                <Nav.Link as={Link} to="/family-access" className="text-white me-4 d-flex align-items-center">
+                  <FaUserFriends className="me-2" />
+                  Family Access
+                </Nav.Link>
 
-            {/* Right-aligned Book Button */}
-            <Button 
-              variant="light" 
-              className="book-consultation-btn d-flex align-items-center fw-bold"
-              onClick={handleBookClick}
-            >
-              <FaCalendarCheck className="me-2 text-primary" />
-              <span>Book a Consultation</span>
-            </Button>
+                <Button 
+                  variant="light" 
+                  className="book-consultation-btn d-flex align-items-center fw-bold"
+                  onClick={handleBookClick}
+                >
+                  <FaCalendarCheck className="me-2 text-primary" />
+                  <span>Book a Consultation</span>
+                </Button>
+              </>
+            )}
+
+            {/* Show Login/Register when not logged in */}
+            {!user && (
+              <div className="d-flex gap-2">
+                <Button 
+                  as={Link}
+                  to="/login" 
+                  variant="outline-light"
+                  size="sm"
+                >
+                  Login
+                </Button>
+                <Button 
+                  as={Link}
+                  to="/register" 
+                  variant="light"
+                  size="sm"
+                >
+                  Get Started
+                </Button>
+              </div>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>

@@ -8,6 +8,14 @@ const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
 
+  // apply white background while on registration page
+  React.useEffect(() => {
+    document.body.classList.add('register-page');
+    return () => {
+      document.body.classList.remove('register-page');
+    };
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',

@@ -13,7 +13,16 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f8f9fa;
+  
+  /* DARKER MESH BACKGROUND */
+  background-color: rgba(0,0,0);
+  background-image: 
+    linear-gradient(rgba(13, 110, 253, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 110, 253, 0.15) 1px, transparent 1px),
+    linear-gradient(rgba(13, 110, 253, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 110, 253, 0.08) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
 }
 
 .gradient-header {
@@ -21,7 +30,7 @@ body {
 }
 
 .shadow-custom {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
 }
 
 .transition-all {
@@ -70,9 +79,16 @@ body {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* auth page background overrides */
+body.login-page,
+body.register-page {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
 .hover-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 1rem 3rem rgba(0,0,0,0.175) !important;
+  box-shadow: 0 1rem 3rem rgba(0,0,0,0.4) !important;
 }
 
 /* Loading Spinner */
@@ -80,14 +96,15 @@ body {
   width: 1rem;
   height: 1rem;
 }
+
 /* Consultation Button Styling */
 .book-consultation-btn {
   border-radius: 50px;
   padding: 8px 24px;
   border: 2px solid transparent;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  color: #007bff !important; /* Matches your primary blue */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  color: #007bff !important;
 }
 
 .book-consultation-btn:hover {
@@ -104,7 +121,7 @@ body {
 /* Responsive adjustment */
 @media (max-width: 768px) {
   .book-consultation-btn span {
-    display: none; /* Only show icon on mobile to save space */
+    display: none;
   }
   .book-consultation-btn {
     padding: 10px;

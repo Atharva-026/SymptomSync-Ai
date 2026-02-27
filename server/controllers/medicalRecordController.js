@@ -298,7 +298,7 @@ exports.analyzeRecord = async (req, res) => {
 
     // Perform AI analysis
     const filePath = path.join(__dirname, '..', record.fileUrl);
-    const analysis = await analyzeWithAI(filePath, record.fileType);
+    const analysis = await analyzeWithAI(filePath, record.fileType, record.description || record.title);
 
     // Update record with analysis
     record.aiAnalysis = {

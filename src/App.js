@@ -21,6 +21,7 @@ import AboutPage from './pages/AboutPage';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
+import './App.css';
 import { tamboComponents, tamboTools, systemPrompt } from './config/tamboConfig';
 
 /**

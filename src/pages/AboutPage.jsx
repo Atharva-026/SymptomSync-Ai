@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Modal } from 'react-bootstrap';
 import { 
   FaRobot, 
   FaUsers, 
@@ -11,12 +11,17 @@ import {
   FaDollarSign,
   FaHospital,
   FaUserMd,
-  FaHandHoldingHeart
+  FaHandHoldingHeart,
+  FaComments,
+  FaQrcode,
+  FaCalendarAlt,
+  FaBell
 } from 'react-icons/fa';
 import './AboutPage.css';
 
 const AboutPage = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [showArchitecture, setShowArchitecture] = useState(false);
 
   const marketResearch = [
     {
@@ -52,33 +57,43 @@ const AboutPage = () => {
   const features = [
     {
       icon: <FaRobot />,
-      title: "AI Symptom Analysis",
-      desc: "Real-time risk scoring (0-100%) with severity classification"
+      title: "AI-Powered Symptom Analysis",
+      desc: "Conversational AI engine analyzes symptoms through natural language processing and generates risk scores (0-100%)"
+    },
+    {
+      icon: <FaComments />,
+      title: "Interactive Chat Interface",
+      desc: "Natural conversational flow for symptom reporting, making healthcare accessible to all age groups"
+    },
+    {
+      icon: <FaFileMedical />,
+      title: "Smart EHR with AI Analysis",
+      desc: "Secure storage of medical records with AI-powered analysis of X-rays, lab reports, and prescriptions"
+    },
+    {
+      icon: <FaQrcode />,
+      title: "QR Code Medical Sharing",
+      desc: "Instant, tokenized sharing of medical records with doctors and family via secure QR codes"
+    },
+    {
+      icon: <FaCalendarAlt />,
+      title: "Risk-Based Scheduling",
+      desc: "Automatic doctor appointment booking for moderate to high-risk assessments with priority queuing"
     },
     {
       icon: <FaUsers />,
       title: "Family Access System",
-      desc: "Caregiver support with permission-based patient record access"
+      desc: "Permission-based caregiver access allowing elderly patients to receive family-assisted healthcare management"
+    },
+    {
+      icon: <FaBell />,
+      title: "Email Notification System",
+      desc: "Real-time alerts for appointments, risk assessments, family access requests, and emergency situations"
     },
     {
       icon: <FaVideo />,
-      title: "Secure Video Consult",
-      desc: "Low-latency consultations powered by Jitsi API"
-    },
-    {
-      icon: <FaFileMedical />,
-      title: "QR Medical Records",
-      desc: "Instant, tokenized sharing with doctors and family"
-    },
-    {
-      icon: <FaShieldAlt />,
-      title: "Emergency Triage",
-      desc: "Automatic 911 alert for high-risk assessments"
-    },
-    {
-      icon: <FaUserMd />,
-      title: "Doctor Dashboard",
-      desc: "Prioritized patient queue based on AI risk scores"
+      title: "Secure Video Consultations",
+      desc: "Low-latency video calls powered by Jitsi API for real-time doctor-patient interactions"
     }
   ];
 
@@ -108,10 +123,10 @@ const AboutPage = () => {
           <div className="hero-content">
             <h1 className="hero-title">SymptomSync AI</h1>
             <p className="hero-subtitle">
-              AI-powered family-centric telemedicine platform bridging patients, doctors, and caregivers 
-              through intelligent triage, real-time consultations, and secure medical record management. 
-              Addressing the $285B telemedicine market with innovative AI risk assessment and 
-              elder-care focused design.
+              An intelligent telemedicine platform combining AI-powered symptom analysis, 
+              conversational healthcare assistance, and family-centric care management. 
+              Empowering patients with instant risk assessment, secure medical record sharing, 
+              and seamless doctor consultations—all in one unified platform.
             </p>
           </div>
         </Container>
@@ -120,10 +135,10 @@ const AboutPage = () => {
       <Container className="py-5">
         {/* Key Features Grid */}
         <section className="section-features mb-5">
-          <h2 className="section-title">Key Features</h2>
+          <h2 className="section-title">Core Features</h2>
           <Row className="g-4">
             {features.map((feature, idx) => (
-              <Col md={4} key={idx}>
+              <Col md={6} lg={3} key={idx}>
                 <Card 
                   className="feature-card-new"
                   onMouseEnter={() => setHoveredCard(`feature-${idx}`)}
@@ -135,7 +150,7 @@ const AboutPage = () => {
                 >
                   <Card.Body>
                     <div className="feature-icon">{feature.icon}</div>
-                    <h5 className="feature-title">{feature.title}</h5>
+                    <h6 className="feature-title">{feature.title}</h6>
                     <p className="feature-desc">{feature.desc}</p>
                   </Card.Body>
                 </Card>
@@ -147,7 +162,11 @@ const AboutPage = () => {
         {/* Architecture Diagram */}
         <section className="section-architecture mb-5">
           <h2 className="section-title">System Architecture</h2>
-          <Card className="architecture-card">
+          <Card 
+            className="architecture-card" 
+            onClick={() => setShowArchitecture(true)}
+            style={{ cursor: 'pointer' }}
+          >
             <Card.Body className="p-0">
               <div className="architecture-wrapper">
                 <img 
@@ -157,8 +176,7 @@ const AboutPage = () => {
                 />
                 <div className="architecture-overlay">
                   <p className="architecture-caption">
-                    End-to-end patient journey: AI symptom analysis → Risk classification → 
-                    Appointment booking → Video consultation → Smart EHR storage
+                    🔍 Click to view full architecture diagram
                   </p>
                 </div>
               </div>
@@ -261,6 +279,25 @@ const AboutPage = () => {
           </Card>
         </section>
       </Container>
+
+      {/* Architecture Modal */}
+      <Modal 
+        show={showArchitecture} 
+        onHide={() => setShowArchitecture(false)}
+        size="xl"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>SymptomSync AI - System Architecture</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-0">
+          <img 
+            src="/architecture-diagram.png" 
+            alt="Full Architecture Diagram" 
+            style={{ width: '100%', height: 'auto' }}
+          />
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

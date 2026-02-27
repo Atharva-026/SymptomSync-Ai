@@ -8,6 +8,14 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // set white background for auth page
+  React.useEffect(() => {
+    document.body.classList.add('login-page');
+    return () => {
+      document.body.classList.remove('login-page');
+    };
+  }, []);
+
   const [formData, setFormData] = useState({
     email: '',
     password: ''
