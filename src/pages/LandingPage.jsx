@@ -1,249 +1,224 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Container, Row, Col, Button, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { 
-  FaUserMd, FaUserInjured, FaVideo, FaChartLine, 
-  FaShieldAlt, FaRobot, FaHeartbeat, FaCalendarAlt,
-  FaQrcode, FaBell, FaStethoscope
+  FaRobot, FaChartLine, FaVideo, FaQrcode, FaCalendarAlt, FaBell,
+  FaHeartbeat, FaStethoscope, FaUserMd, FaUserInjured
 } from 'react-icons/fa';
 import Header from '../components/layout/Header';
+import './LandingPage.css';
 
 const LandingPage = () => {
+  const [hoveredCard, setHoveredCard] = useState(null);
+
   const features = [
     { 
       icon: <FaRobot />, 
       title: "AI Symptom Analysis", 
-      desc: "Conversational AI engine analyzes symptoms through natural language and generates risk scores",
+      desc: "Conversational AI analyzes symptoms through natural language with real-time risk scoring (0-100%)",
       color: "#10b981"
     },
     { 
       icon: <FaChartLine />, 
       title: "Risk Assessment", 
-      desc: "Real-time severity classification from low to emergency with intelligent prioritization",
+      desc: "Intelligent severity classification from low to emergency with automated triage prioritization",
       color: "#3b82f6"
     },
     { 
       icon: <FaVideo />, 
       title: "Video Consultations", 
-      desc: "HD video calls with doctors powered by secure Jitsi API integration",
+      desc: "Secure HD video calls with doctors powered by Jitsi API for real-time care delivery",
       color: "#8b5cf6"
     },
     { 
       icon: <FaQrcode />, 
       title: "Smart Medical Records", 
-      desc: "QR code-based secure sharing with AI analysis of X-rays and lab reports",
+      desc: "QR code-based instant sharing with AI-powered analysis of X-rays and lab reports",
       color: "#f59e0b"
     },
     { 
       icon: <FaCalendarAlt />, 
       title: "Smart Scheduling", 
-      desc: "Automatic appointment booking based on AI risk assessment results",
+      desc: "Automatic appointment booking based on AI risk assessment with priority queuing",
       color: "#ec4899"
     },
     { 
       icon: <FaBell />, 
       title: "Real-time Alerts", 
-      desc: "Email notifications for appointments, assessments, and emergency situations",
+      desc: "Email notifications for appointments, risk assessments, and emergency situations",
       color: "#06b6d4"
     }
   ];
 
   return (
-    <div className="landing-page">
+    <div className="landing-page-new">
       <Header />
       
       {/* Hero Section */}
-      <div className="hero-section-landing">
+      <div className="hero-section-new">
         <Container>
-          <Row className="align-items-center min-vh-75">
-            <Col lg={6} className="py-5">
-              <div className="hero-badge mb-3">
-                <span className="badge-pulse"></span>
-                AI-Powered Healthcare
-              </div>
-              <h1 className="hero-title-landing">
-                Smart Healthcare,
-                <br />
-                <span className="text-gradient">Right at Your Fingertips</span>
-              </h1>
-              <p className="hero-description">
-                Experience intelligent symptom assessment with real-time AI analysis, 
-                instant risk scoring, and seamless video consultations with qualified doctors.
-              </p>
-              <div className="hero-stats mb-4">
-                <div className="stat-item">
-                  <FaStethoscope className="stat-icon" />
-                  <div>
-                    <div className="stat-number">24/7</div>
-                    <div className="stat-label">Availability</div>
-                  </div>
-                </div>
-                <div className="stat-divider"></div>
-                <div className="stat-item">
-                  <FaHeartbeat className="stat-icon" />
-                  <div>
-                    <div className="stat-number">AI-Powered</div>
-                    <div className="stat-label">Risk Analysis</div>
-                  </div>
+          <div className="hero-content-new">
+            <div className="hero-badge-new">
+              <span className="badge-pulse-new"></span>
+              AI-Powered Healthcare Platform
+            </div>
+            <h1 className="hero-title-new">
+              Smart Healthcare, <br />
+              <span className="text-gradient-new">Right at Your Fingertips</span>
+            </h1>
+            <p className="hero-subtitle-new">
+              Experience intelligent symptom assessment with real-time AI analysis, instant risk scoring, 
+              and seamless video consultations with qualified healthcare professionals.
+            </p>
+            <div className="hero-stats-new">
+              <div className="stat-item-new">
+                <FaStethoscope className="stat-icon-new" />
+                <div>
+                  <div className="stat-number-new">24/7</div>
+                  <div className="stat-label-new">Availability</div>
                 </div>
               </div>
-              <div className="d-flex gap-3 flex-wrap">
-                <Button as={Link} to="/register" className="btn-hero-primary">
-                  Get Started Free
-                </Button>
-                <Button as={Link} to="/about" className="btn-hero-secondary">
-                  Learn More
-                </Button>
+              <div className="stat-divider-new"></div>
+              <div className="stat-item-new">
+                <FaHeartbeat className="stat-icon-new" />
+                <div>
+                  <div className="stat-number-new">AI-Powered</div>
+                  <div className="stat-label-new">Risk Analysis</div>
+                </div>
               </div>
-            </Col>
-            <Col lg={6} className="text-center">
-              <div className="hero-illustration">
-                <div className="floating-card card-1">
-                  <FaRobot size={30} className="text-primary" />
-                  <div className="ms-3">
-                    <div className="fw-bold">AI Analysis</div>
-                    <small className="text-muted">Real-time assessment</small>
-                  </div>
-                </div>
-                <div className="floating-card card-2">
-                  <FaVideo size={30} className="text-success" />
-                  <div className="ms-3">
-                    <div className="fw-bold">Video Call</div>
-                    <small className="text-muted">Connect with doctors</small>
-                  </div>
-                </div>
-                <div className="floating-card card-3">
-                  <FaShieldAlt size={30} className="text-danger" />
-                  <div className="ms-3">
-                    <div className="fw-bold">Secure</div>
-                    <small className="text-muted">HIPAA compliant</small>
-                  </div>
-                </div>
-                <div className="hero-emoji">🏥</div>
-              </div>
-            </Col>
-          </Row>
+            </div>
+            <div className="hero-buttons">
+              <Button as={Link} to="/register" className="btn-hero-primary-new">
+                Get Started Free
+              </Button>
+              <Button as={Link} to="/about" className="btn-hero-secondary-new">
+                Learn More
+              </Button>
+            </div>
+          </div>
         </Container>
       </div>
 
-      {/* Features Section */}
-      <Container className="py-5 my-5">
-        <div className="text-center mb-5">
-          <h2 className="section-title-landing">Why Choose SymptomSync AI?</h2>
-          <p className="section-subtitle">
+      <Container className="py-5">
+        {/* Features Section */}
+        <section className="section-features-new mb-5">
+          <h2 className="section-title-new">Why Choose SymptomSync AI?</h2>
+          <p className="section-subtitle-new">
             Advanced AI technology meets compassionate healthcare
           </p>
-        </div>
-        <Row className="g-4">
-          {features.map((feature, idx) => (
-            <Col md={6} lg={4} key={idx}>
-              <Card className="feature-card-landing h-100">
-                <Card.Body className="p-4">
-                  <div 
-                    className="feature-icon-wrapper mb-3" 
-                    style={{ backgroundColor: `${feature.color}15` }}
-                  >
-                    <div style={{ color: feature.color, fontSize: '2rem' }}>
+          <Row className="g-4">
+            {features.map((feature, idx) => (
+              <Col md={6} lg={4} key={idx}>
+                <Card 
+                  className="feature-card-new"
+                  onMouseEnter={() => setHoveredCard(`feature-${idx}`)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  style={{
+                    transform: hoveredCard === `feature-${idx}` ? 'translateY(-10px)' : 'translateY(0)',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  <Card.Body>
+                    <div 
+                      className="feature-icon-new" 
+                      style={{ color: feature.color }}
+                    >
                       {feature.icon}
                     </div>
-                  </div>
-                  <h5 className="feature-title-landing">{feature.title}</h5>
-                  <p className="feature-desc-landing">{feature.desc}</p>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Container>
+                    <h5 className="feature-title-new">{feature.title}</h5>
+                    <p className="feature-desc-new">{feature.desc}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </section>
 
-      {/* How It Works */}
-      <div className="how-it-works-section">
-        <Container>
-          <div className="text-center mb-5">
-            <h2 className="section-title-landing text-white">How It Works</h2>
-            <p className="section-subtitle text-white-50">
-              Simple, fast, and secure healthcare journey
-            </p>
-          </div>
-          <Row>
-            <Col md={6} className="mb-4">
-              <Card className="process-card">
+        {/* How It Works */}
+        <section className="section-process-new mb-5">
+          <h2 className="section-title-new">How It Works</h2>
+          <p className="section-subtitle-new">
+            Simple, fast, and secure healthcare journey
+          </p>
+          <Row className="g-4">
+            <Col md={6}>
+              <Card className="process-card-new">
                 <Card.Body className="p-4">
-                  <div className="process-icon patient-icon">
+                  <div className="process-icon-new patient-icon-new">
                     <FaUserInjured size={40} />
                   </div>
-                  <h4 className="mb-3">For Patients</h4>
-                  <div className="process-steps">
-                    <div className="process-step">
-                      <span className="step-number">1</span>
-                      <span className="step-text">Describe symptoms naturally to AI</span>
+                  <h4 className="process-title-new">For Patients</h4>
+                  <div className="process-steps-new">
+                    <div className="process-step-new">
+                      <span className="step-number-new">1</span>
+                      <span className="step-text-new">Describe symptoms naturally to AI</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">2</span>
-                      <span className="step-text">Get instant risk assessment</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">2</span>
+                      <span className="step-text-new">Get instant risk assessment</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">3</span>
-                      <span className="step-text">Book appointment with specialist</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">3</span>
+                      <span className="step-text-new">Book appointment with specialist</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">4</span>
-                      <span className="step-text">Join video consultation</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">4</span>
+                      <span className="step-text-new">Join video consultation</span>
                     </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
-            <Col md={6} className="mb-4">
-              <Card className="process-card">
+            <Col md={6}>
+              <Card className="process-card-new">
                 <Card.Body className="p-4">
-                  <div className="process-icon doctor-icon">
+                  <div className="process-icon-new doctor-icon-new">
                     <FaUserMd size={40} />
                   </div>
-                  <h4 className="mb-3">For Doctors</h4>
-                  <div className="process-steps">
-                    <div className="process-step">
-                      <span className="step-number">1</span>
-                      <span className="step-text">Receive AI-analyzed patient requests</span>
+                  <h4 className="process-title-new">For Doctors</h4>
+                  <div className="process-steps-new">
+                    <div className="process-step-new">
+                      <span className="step-number-new">1</span>
+                      <span className="step-text-new">Receive AI-analyzed patient requests</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">2</span>
-                      <span className="step-text">Review comprehensive assessment</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">2</span>
+                      <span className="step-text-new">Review comprehensive assessment</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">3</span>
-                      <span className="step-text">Conduct video consultations</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">3</span>
+                      <span className="step-text-new">Conduct video consultations</span>
                     </div>
-                    <div className="process-step">
-                      <span className="step-number">4</span>
-                      <span className="step-text">Provide care and follow-up</span>
+                    <div className="process-step-new">
+                      <span className="step-number-new">4</span>
+                      <span className="step-text-new">Provide care and follow-up</span>
                     </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
           </Row>
-        </Container>
-      </div>
+        </section>
 
-      {/* CTA Section */}
-      <Container className="py-5 my-5">
-        <Card className="cta-card">
-          <Card.Body className="p-5 text-center">
-            <h2 className="cta-title">Ready to Experience Smart Healthcare?</h2>
-            <p className="cta-subtitle">
-              Join thousands using AI-powered symptom assessment and video consultations
-            </p>
-            <Button as={Link} to="/register" className="btn-cta">
-              Create Free Account
-              <span className="ms-2">→</span>
-            </Button>
-          </Card.Body>
-        </Card>
+        {/* CTA Section */}
+        <section className="section-cta-new">
+          <Card className="cta-card-new">
+            <Card.Body className="p-5 text-center">
+              <h2 className="cta-title-new">Ready to Experience Smart Healthcare?</h2>
+              <p className="cta-subtitle-new">
+                Join thousands using AI-powered symptom assessment and video consultations
+              </p>
+              <Button as={Link} to="/register" className="btn-cta-new">
+                Create Free Account
+                <span className="ms-2">→</span>
+              </Button>
+            </Card.Body>
+          </Card>
+        </section>
       </Container>
 
       {/* Footer */}
-      <footer className="footer-landing">
+      <footer className="footer-new">
         <Container>
           <Row className="align-items-center">
             <Col md={6}>
@@ -259,9 +234,9 @@ const LandingPage = () => {
               <p className="text-white-50 small mb-2">
                 Built for healthcare innovation
               </p>
-              <Link to="/about" className="footer-link">About</Link>
+              <Link to="/about" className="footer-link-new">About</Link>
               <span className="mx-2 text-white-50">•</span>
-              <Link to="/register" className="footer-link">Get Started</Link>
+              <Link to="/register" className="footer-link-new">Get Started</Link>
             </Col>
           </Row>
         </Container>
