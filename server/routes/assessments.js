@@ -1,66 +1,145 @@
 const express = require('express');
 const router = express.Router();
+const Groq = require('groq-sdk');
+
+const getGroqClient = () => new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 const { 
     createAssessment, 
     getAssessments, 
     getAssessment 
 } = require('../controllers/assessmentController');
+
 const auth = require('../middleware/auth');
 
-// --- DATABASE OPERATIONS (Required for BookingInterface) ---
+// --- DATABASE OPERATIONS ---
 
-// POST /api/assessments -> Saves the actual data to MongoDB
 router.post('/', auth, createAssessment);
-
-// GET /api/assessments -> Gets history for the patient
 router.get('/', auth, getAssessments);
-
-// GET /api/assessments/:id -> Gets a specific report
 router.get('/:id', auth, getAssessment);
 
+// --- AI ANALYSIS ENDPOINT ---
 
-// --- AI TOOL ENDPOINTS (For Tambo SDK Logic) ---
-
-// POST /api/assessments/analyze
 router.post('/analyze', async (req, res) => {
     try {
-        const { symptoms } = req.body;
-        const symptomsStr = (Array.isArray(symptoms) ? symptoms.join(' ') : symptoms || '').toLowerCase();
-        
-        const possibleConditions = [];
-        const recommendations = [];
+        const { symptoms, age, gender, comorbidities } = req.body;
 
-        if (symptomsStr.includes('headache')) {
-            possibleConditions.push('Tension headache', 'Migraine');
-            recommendations.push('Stay hydrated', 'Rest in a dark room');
-        } else if (symptomsStr.includes('chest')) {
-            possibleConditions.push('Cardiac concern');
-            recommendations.push('🚨 SEEK EMERGENCY CARE');
-        } else {
-            possibleConditions.push('General discomfort');
-            recommendations.push('Monitor symptoms', 'Consult a doctor');
-        }
+        const symptomsStr = (Array.isArray(symptoms) 
+            ? symptoms.join(' ') 
+            : symptoms || '').toLowerCase();
 
-        res.json({ possibleConditions, recommendations, analyzedAt: new Date() });
+        const completion = await getGroqClient().chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a clinical triage assistant. You do NOT diagnose. You assess symptoms and provide risk guidance only. Always respond with valid JSON only, no extra text.'
+                },
+                {
+                    role: 'user',
+                    content: `
+Patient Input: "${symptomsStr}"
+Age: ${age || 'not provided'}
+Gender: ${gender || 'not provided'}
+Known Conditions: ${comorbidities || 'none'}
+
+Your tasks:
+1. Normalize the symptom.
+2. Identify possible condition categories (NOT diagnosis).
+3. Give a risk score 0-100.
+4. Give recommendations.
+5. Map to the most accurate ICD-10 code and provide the body system (e.g. Musculoskeletal, Cardiovascular).
+
+Return ONLY this JSON:
+{
+  "normalizedSymptom": "",
+  "icd10_code": "",
+  "icd10_description": "",
+  "bodySystem": "",
+  "possibleConditions": [],
+  "riskScore": 0,
+  "riskLevel": "",
+  "recommendations": [],
+  "redFlags": [],
+  "followUpQuestion": null,
+  "confidence": 0.0,
+  "disclaimer": "This is a risk assessment only. Consult a qualified doctor."
+}
+
+riskLevel must be: "low" (0-39) / "moderate" (40-74) / "high" (75-89) / "emergency" (90-100)`
+                }
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' }
+        });
+
+        const parsed = JSON.parse(completion.choices[0].message.content);
+
+        res.json({
+            ...parsed,
+            analyzedAt: new Date()
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Analysis failed', error: error.message });
+        console.error(error);
+        res.status(500).json({
+            message: 'AI analysis failed',
+            error: error.message
+        });
     }
 });
 
-// POST /api/assessments/risk
+// --- AI RISK ENDPOINT ---
+
 router.post('/risk', async (req, res) => {
     try {
-        const { painLevel, symptoms } = req.body;
-        let risk = (painLevel || 0) * 5 + (symptoms?.length || 0) * 5;
-        const finalRisk = Math.min(risk, 100);
-        
-        res.json({
-            riskScore: finalRisk,
-            riskLevel: finalRisk >= 80 ? 'emergency' : finalRisk >= 40 ? 'moderate' : 'low',
-            calculatedAt: new Date()
+        const { symptoms, painLevel, age, comorbidities } = req.body;
+
+        const symptomsStr = (Array.isArray(symptoms) 
+            ? symptoms.join(' ') 
+            : symptoms || '').toLowerCase();
+
+        const completion = await getGroqClient().chat.completions.create({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are a clinical risk assessment engine. No diagnosis, risk scoring only. Always respond with valid JSON only.'
+                },
+                {
+                    role: 'user',
+                    content: `
+Symptoms: "${symptomsStr}"
+Pain Level (0-10): ${painLevel || 'not provided'}
+Age: ${age || 'not provided'}
+Known Conditions: ${comorbidities || 'none'}
+
+Return ONLY this JSON:
+{
+  "riskScore": 0,
+  "riskLevel": "",
+  "confidence": 0.0,
+  "factors": [],
+  "calculatedAt": "${new Date().toISOString()}"
+}
+
+riskLevel must be: "low" / "moderate" / "high" / "emergency"`
+                }
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' }
         });
+
+        const parsed = JSON.parse(completion.choices[0].message.content);
+
+        res.json(parsed);
+
     } catch (error) {
-        res.status(500).json({ message: 'Risk calculation failed' });
+        console.error(error);
+        res.status(500).json({
+            message: 'Risk calculation failed',
+            error: error.message
+        });
     }
 });
 
