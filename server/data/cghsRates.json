@@ -1,0 +1,135 @@
+{
+  "procedures": {
+    "angioplasty": {
+      "name": "Coronary Angioplasty (PTCA)",
+      "baseMin": 120000,
+      "baseMax": 200000,
+      "stayDays": { "min": 3, "max": 7 },
+      "icuLikelihood": "high",
+      "specialization": "Cardiovascular"
+    },
+    "bypass surgery": {
+      "name": "Coronary Artery Bypass Graft (CABG)",
+      "baseMin": 200000,
+      "baseMax": 400000,
+      "stayDays": { "min": 7, "max": 14 },
+      "icuLikelihood": "high",
+      "specialization": "Cardiovascular"
+    },
+    "knee replacement": {
+      "name": "Total Knee Arthroplasty",
+      "baseMin": 150000,
+      "baseMax": 300000,
+      "stayDays": { "min": 5, "max": 10 },
+      "icuLikelihood": "low",
+      "specialization": "Orthopedics"
+    },
+    "hip replacement": {
+      "name": "Total Hip Arthroplasty",
+      "baseMin": 180000,
+      "baseMax": 320000,
+      "stayDays": { "min": 5, "max": 10 },
+      "icuLikelihood": "low",
+      "specialization": "Orthopedics"
+    },
+    "appendectomy": {
+      "name": "Appendectomy",
+      "baseMin": 30000,
+      "baseMax": 80000,
+      "stayDays": { "min": 2, "max": 5 },
+      "icuLikelihood": "low",
+      "specialization": "General Surgery"
+    },
+    "cataract": {
+      "name": "Cataract Surgery (Phacoemulsification)",
+      "baseMin": 15000,
+      "baseMax": 50000,
+      "stayDays": { "min": 0, "max": 1 },
+      "icuLikelihood": "none",
+      "specialization": "Ophthalmology"
+    },
+    "chemotherapy": {
+      "name": "Chemotherapy (per cycle)",
+      "baseMin": 20000,
+      "baseMax": 80000,
+      "stayDays": { "min": 1, "max": 3 },
+      "icuLikelihood": "low",
+      "specialization": "Oncology"
+    },
+    "mri scan": {
+      "name": "MRI Scan",
+      "baseMin": 5000,
+      "baseMax": 15000,
+      "stayDays": { "min": 0, "max": 0 },
+      "icuLikelihood": "none",
+      "specialization": "Radiology"
+    },
+    "dialysis": {
+      "name": "Hemodialysis (per session)",
+      "baseMin": 2000,
+      "baseMax": 5000,
+      "stayDays": { "min": 0, "max": 1 },
+      "icuLikelihood": "none",
+      "specialization": "Nephrology"
+    },
+    "normal delivery": {
+      "name": "Normal Vaginal Delivery",
+      "baseMin": 15000,
+      "baseMax": 40000,
+      "stayDays": { "min": 2, "max": 4 },
+      "icuLikelihood": "none",
+      "specialization": "Obstetrics"
+    },
+    "cesarean": {
+      "name": "Caesarean Section",
+      "baseMin": 40000,
+      "baseMax": 100000,
+      "stayDays": { "min": 4, "max": 7 },
+      "icuLikelihood": "low",
+      "specialization": "Obstetrics"
+    },
+    "spine surgery": {
+      "name": "Spinal Fusion / Disc Surgery",
+      "baseMin": 150000,
+      "baseMax": 350000,
+      "stayDays": { "min": 5, "max": 10 },
+      "icuLikelihood": "medium",
+      "specialization": "Neurology"
+    },
+    "gallbladder removal": {
+      "name": "Laparoscopic Cholecystectomy",
+      "baseMin": 40000,
+      "baseMax": 90000,
+      "stayDays": { "min": 2, "max": 4 },
+      "icuLikelihood": "low",
+      "specialization": "General Surgery"
+    },
+    "hernia repair": {
+      "name": "Hernia Repair (Laparoscopic)",
+      "baseMin": 35000,
+      "baseMax": 80000,
+      "stayDays": { "min": 1, "max": 3 },
+      "icuLikelihood": "none",
+      "specialization": "General Surgery"
+    },
+    "echocardiogram": {
+      "name": "Echocardiogram",
+      "baseMin": 2000,
+      "baseMax": 6000,
+      "stayDays": { "min": 0, "max": 0 },
+      "icuLikelihood": "none",
+      "specialization": "Cardiovascular"
+    }
+  },
+  "roomRates": {
+    "general": { "perDay": { "min": 1500, "max": 3000 } },
+    "semi-private": { "perDay": { "min": 3000, "max": 6000 } },
+    "private": { "perDay": { "min": 6000, "max": 15000 } },
+    "icu": { "perDay": { "min": 10000, "max": 25000 } }
+  },
+  "consultationFees": {
+    "general": { "min": 500, "max": 1500 },
+    "specialist": { "min": 1000, "max": 3000 },
+    "senior_specialist": { "min": 2000, "max": 5000 }
+  }
+}
