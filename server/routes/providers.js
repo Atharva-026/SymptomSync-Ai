@@ -23,7 +23,7 @@ const cityCoords = {
 };
 
 // GET /api/providers
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const { city, bodySystem, budget, limit, lat, lng } = req.query;
 
@@ -53,7 +53,7 @@ router.get('/', (req, res) => {
 
         if (pool.length < 3) pool = hospitals;
 
-        const ranked = rankProviders(
+        const ranked = await rankProviders(
             pool,
             userLat,
             userLng,
