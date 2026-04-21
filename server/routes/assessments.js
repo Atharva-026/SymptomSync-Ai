@@ -12,13 +12,11 @@ const {
 
 const auth = require('../middleware/auth');
 
-// --- DATABASE OPERATIONS ---
-
+// --- DATABASE OPERATIONS (no :id yet) ---
 router.post('/', auth, createAssessment);
 router.get('/', auth, getAssessments);
-router.get('/:id', auth, getAssessment);
 
-// --- AI ANALYSIS ENDPOINT ---
+// --- AI ENDPOINTS (must be before /:id) ---
 
 router.post('/analyze', async (req, res) => {
     try {
@@ -89,8 +87,6 @@ riskLevel must be: "low" (0-39) / "moderate" (40-74) / "high" (75-89) / "emergen
     }
 });
 
-// --- AI RISK ENDPOINT ---
-
 router.post('/risk', async (req, res) => {
     try {
         const { symptoms, painLevel, age, comorbidities } = req.body;
@@ -142,5 +138,8 @@ riskLevel must be: "low" / "moderate" / "high" / "emergency"`
         });
     }
 });
+
+// --- /:id ROUTE LAST (prevents it swallowing /analyze and /risk) ---
+router.get('/:id', auth, getAssessment);
 
 module.exports = router;

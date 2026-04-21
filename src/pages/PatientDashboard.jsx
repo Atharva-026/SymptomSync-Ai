@@ -3,6 +3,8 @@ import { Container, Row, Col, Card, Button, Badge, ListGroup, Alert, Spinner } f
 import { FaCalendarAlt, FaHistory, FaVideo, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 
+
+import HealthcareNavigator from '../components/medical/HealthcareNavigator';
 import MedicalRecordsDashboard from '../components/medical/MedicalRecordsDashboard';
 import ChatInput from '../components/medical/ChatInput';
 import BodyDiagram from '../components/medical/BodyDiagram';
@@ -492,6 +494,7 @@ const PatientDashboard = () => {
 
           {currentStep === 'recommendation' && (
             <>
+              {/* Assessment Summary Card */}
               <div className="mb-4">
                 <Card className="bg-light border-primary" style={{ borderWidth: '2px' }}>
                   <Card.Body>
@@ -504,7 +507,11 @@ const PatientDashboard = () => {
                   </Card.Body>
                 </Card>
               </div>
+              
+              {/* Recommendation Card */}
               <RecommendationCard {...getRecommendation()} />
+              
+              {/* Conditional Booking Button */}
               {riskLevel >= 40 && (
                 <div className="text-center mt-4">
                   <Button variant="success" size="lg" onClick={() => setView('booking')}>
@@ -512,6 +519,12 @@ const PatientDashboard = () => {
                   </Button>
                 </div>
               )}
+              
+              {/* Healthcare Navigator - positioned at the bottom */}
+              <HealthcareNavigator
+                symptoms={symptoms}
+                riskLevel={riskLevel}
+              />
             </>
           )}
         </div>
