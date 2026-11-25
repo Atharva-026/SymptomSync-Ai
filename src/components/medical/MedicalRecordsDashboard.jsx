@@ -76,6 +76,15 @@ const MedicalRecordsDashboard = () => {
     setShowShareModal(true);
   };
 
+  // Files are encrypted at rest; fetch the decrypted bytes with the user's token
+  const handleViewFile = async (record) => {
+    try {
+      await medicalRecordService.openRecordFile(record._id, record.fileName);
+    } catch (err) {
+      alert(typeof err === 'string' ? err : 'Failed to open file');
+    }
+  };
+
   const handleDelete = async (recordId) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
       try {
@@ -263,9 +272,7 @@ const MedicalRecordsDashboard = () => {
                       <Button
                         variant="outline-secondary"
                         size="sm"
-                        as="a"
-                        href={`${process.env.REACT_APP_API_URL?.replace('/api', '')}${record.fileUrl}`}
-                        target="_blank"
+                        onClick={() => handleViewFile(record)}
                       >
                         <FaEye className="me-1" />
                         View

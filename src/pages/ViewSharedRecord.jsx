@@ -15,10 +15,20 @@ const ViewSharedRecord = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAIModal, setShowAIModal] = useState(false);
+  const [fileError, setFileError] = useState('');
 
   useEffect(() => {
     fetchRecord();
   }, [token]);
+
+  const handleViewFile = async () => {
+    setFileError('');
+    try {
+      await medicalRecordService.openSharedFile(token, record.fileName);
+    } catch (err) {
+      setFileError(typeof err === 'string' ? err : 'Failed to open the record');
+    }
+  };
 
   const fetchRecord = async () => {
     try {
@@ -126,20 +136,18 @@ const ViewSharedRecord = () => {
 
           {/* Actions */}
           <div className="d-grid gap-2 mb-4">
-            <Button
-              variant="primary"
-              size="lg"
-              as="a"
-              href={`${process.env.REACT_APP_API_URL?.replace('/api', '')}${record.fileUrl}`}
-              target="_blank"
-            >
+            <Button variant="primary" size="lg" onClick={handleViewFile}>
               <FaDownload className="me-2" />
               View Full Record
             </Button>
-            <Button variant="outline-info" size="lg" onClick={() => setShowAIModal(true)}>
-              <FaRobot className="me-2" />
-              AI Analysis
-            </Button>
+            {fileError && <Alert variant="danger" className="mb-0">{fileError}</Alert>}
+            {/* AI analysis needs a login; anonymous QR viewers only see the file */}
+            {user && (
+              <Button variant="outline-info" size="lg" onClick={() => setShowAIModal(true)}>
+                <FaRobot className="me-2" />
+                AI Analysis
+              </Button>
+            )}
           </div>
 
           {/* Doctor Access Info */}
@@ -158,6 +166,9 @@ const ViewSharedRecord = () => {
             <small>
               <strong>🔒 Privacy Protected:</strong> This record is shared securely. Access
               is tracked and can be revoked by the patient at any time.
+              {record.shareExpiresAt && (
+                <> This link expires on {new Date(record.shareExpiresAt).toLocaleString()}.</>
+              )}
             </small>
           </Alert>
         </Card.Body>

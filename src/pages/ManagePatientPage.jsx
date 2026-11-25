@@ -5,11 +5,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Tabs, Tab, Badge, Button, Alert } from 'react-bootstrap';
 import { 
   FaArrowLeft, FaUser, FaCalendarAlt, FaFileAlt, 
-  FaStethoscope, FaPills, FaExclamationTriangle 
+  FaStethoscope, FaPills, FaExclamationTriangle, FaEye
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Header from '../components/layout/Header';
 import familyAccessService from '../services/familyAccessService';
+import medicalRecordService from '../services/medicalRecordService';
+import UploadRecordModal from '../components/medical/UploadRecordModal';
 import './ManagePatientPage.css';
 
 const ManagePatientPage = () => {
@@ -24,6 +26,7 @@ const ManagePatientPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
     loadPatientData();
@@ -89,8 +92,22 @@ const ManagePatientPage = () => {
     navigate(`/book-appointment?patientId=${patientId}`);
   };
 
+  // The old /medical-records/upload route never existed; upload in a modal instead
   const handleUploadRecord = () => {
-    navigate(`/medical-records/upload?patientId=${patientId}`);
+    setShowUploadModal(true);
+  };
+
+  const handleUploadSuccess = async () => {
+    toast.success('Record encrypted and uploaded');
+    // Refresh only the records list (not the whole page) when this user may view it
+    if (permissions.viewRecords) {
+      try {
+        const res = await familyAccessService.getPatientMedicalRecords(patientId);
+        setMedicalRecords(res.data.records || []);
+      } catch (err) {
+        console.error('Error refreshing records:', err);
+      }
+    }
   };
 
   if (loading) {
@@ -315,6 +332,14 @@ const ManagePatientPage = () => {
           </Card.Body>
         </Card>
       </Container>
+
+      <UploadRecordModal
+        show={showUploadModal}
+        onHide={() => setShowUploadModal(false)}
+        onUploadSuccess={handleUploadSuccess}
+        patientId={patientId}
+        patientName={patientInfo?.name}
+      />
     </>
   );
 };
@@ -437,7 +462,29 @@ const AssessmentsTab = ({ assessments }) => {
   );
 };
 
+const RECORD_TYPE_LABELS = {
+  lab_report: '🧪 Lab Report',
+  prescription: '💊 Prescription',
+  scan: '🔬 Scan',
+  xray: '🦴 X-Ray',
+  other: '📄 Other',
+};
+
 const MedicalRecordsTab = ({ records }) => {
+  const [openingId, setOpeningId] = useState(null);
+
+  // The file is encrypted; the server decrypts it only if the patient still allows this
+  const handleView = async (record) => {
+    try {
+      setOpeningId(record._id);
+      await medicalRecordService.openRecordFile(record._id, record.fileName);
+    } catch (err) {
+      toast.error(typeof err === 'string' ? err : 'Failed to open record');
+    } finally {
+      setOpeningId(null);
+    }
+  };
+
   if (records.length === 0) {
     return (
       <div className="text-center py-5">
@@ -448,9 +495,31 @@ const MedicalRecordsTab = ({ records }) => {
   }
 
   return (
-    <div>
-      {/* Display medical records - integrate with existing records components */}
-      <p>Medical records will be displayed here</p>
+    <div className="p-3">
+      {records.map((record) => (
+        <Card key={record._id} className="mb-3">
+          <Card.Body className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h6 className="mb-1">{record.title}</h6>
+              <small className="text-muted">
+                {RECORD_TYPE_LABELS[record.recordType] || RECORD_TYPE_LABELS.other}
+                {' • '}
+                {new Date(record.recordDate || record.uploadDate).toLocaleDateString()}
+                {record.uploadedBy?.name && ` • uploaded by ${record.uploadedBy.name}`}
+              </small>
+            </div>
+            <Button
+              size="sm"
+              variant="outline-primary"
+              disabled={openingId === record._id}
+              onClick={() => handleView(record)}
+            >
+              <FaEye className="me-1" />
+              {openingId === record._id ? 'Opening...' : 'View'}
+            </Button>
+          </Card.Body>
+        </Card>
+      ))}
     </div>
   );
 };
