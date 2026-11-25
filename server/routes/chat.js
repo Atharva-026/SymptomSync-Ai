@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const {
   sendMessage,
+  importContext,
   listConversations,
   getConversation,
   deleteConversation,
@@ -11,6 +12,7 @@ const {
 } = require('../controllers/chatController');
 
 router.post('/message', auth, sendMessage);
+router.post('/import', auth, importContext);
 router.get('/conversations', auth, listConversations);
 router.get('/conversations/:id', auth, getConversation);
 router.delete('/conversations/:id', auth, deleteConversation);

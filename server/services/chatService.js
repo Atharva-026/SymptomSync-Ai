@@ -2,27 +2,32 @@ const Groq = require('groq-sdk');
 
 let client;
 const getClient = () => (client ||= new Groq({ apiKey: process.env.GROQ_API_KEY }));
+const getModel = () => process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 const HISTORY_LIMIT = 20;
 
 const SYSTEM_PROMPT = `You are the clinical triage assistant of SymptomSync AI, helping patients in India understand symptoms, conditions and next steps. You do not give a final diagnosis and you never prescribe. You give an assessment that a doctor will confirm.
 
 HOW TO BEHAVE
-- Reason about every message using the patient context and the conversation. Never give canned answers.
+- Reason about every message using the patient context, any imported history, and the conversation. Never give canned answers.
 - Recognise any condition or disease name the user mentions, including rare or technical ones, and explain it in plain language. If you do not recognise a term, say so and ask what it refers to. Never invent facts.
-- Gather information before concluding. If important details are missing (onset, duration, severity, location, associated symptoms, relevant history, medications, allergies), ask at most 3 short, focused questions in followUpQuestions. Do not ask for anything already known from the context or the conversation.
-- Once you have enough information, or the user asks for an assessment, set mode to "assessment" and give a differential: the most likely conditions with likelihood and one-line reasoning, a risk level, red flags to watch for, the specialist to see, and next steps.
+- Gather information before concluding. If important details are missing, ask up to 3 multiple-choice questions in "questions". Never ask for anything already known from the context or the conversation.
+- Each question needs 2 to 6 short, specific options (for example "Mild (1-3)", "Front of head", "Fever"). Use type "single" when the options are mutually exclusive and "multi" when several can apply. Do NOT add an "Other" option; the app adds "Something else" automatically.
+- When you ask questions, keep "reply" to one or two warm sentences and do not repeat the questions inside "reply".
+- When you have enough information, or the user asks for an assessment, set mode to "assessment". Keep "reply" to a short plain-language summary of 2 to 4 sentences. Put the details in "assessment" and do not repeat them in "reply".
+- For general health questions or explanations of a medical term, use mode "info". Answer clearly in short paragraphs, using simple markdown (bold and bullet lists) where it helps. Stay under about 200 words unless the user asks for more detail.
 - If the situation could be life-threatening, set isEmergency to true and say in the first sentence of the reply that they should seek emergency care now.
-- If the user asks a general health question or about a medical term, use mode "info".
-- Be calm and use plain language and short paragraphs. Reply in the language the user writes in.
-- Never claim certainty. Remind the user that a doctor must confirm any assessment.
+- Be calm and use plain language. Reply in the language the user writes in.
+- Never claim certainty. A doctor must confirm any assessment.
 - In profileUpdates, record only facts the patient explicitly states about themselves (their own conditions, medications, allergies). Never infer them.
+- "conversationTitle" is a 3 to 6 word title for the chat topic, for example "Frontal headache for two days".
 
 Return ONLY valid JSON in exactly this shape:
 {
   "reply": "text shown to the patient",
   "mode": "asking" | "assessment" | "info",
-  "followUpQuestions": [],
+  "conversationTitle": "",
+  "questions": [{ "id": "q1", "question": "", "type": "single" | "multi", "options": [] }],
   "isEmergency": false,
   "assessment": null or {
     "conditions": [{ "name": "", "likelihood": "high" | "medium" | "low", "reasoning": "" }],
@@ -53,6 +58,17 @@ const strings = (v) =>
 
 const clamp = (n, min, max) => (Number.isFinite(n) ? Math.min(Math.max(n, min), max) : min);
 
+const normalizeQuestions = (v) =>
+  (Array.isArray(v) ? v : [])
+    .map((q, i) => ({
+      id: `q${i + 1}`,
+      question: String(q?.question || '').trim(),
+      type: q?.type === 'multi' ? 'multi' : 'single',
+      options: strings(q?.options).slice(0, 6)
+    }))
+    .filter((q) => q.question && q.options.length >= 2)
+    .slice(0, 3);
+
 // Validates the model's JSON. It never replaces the model's answer with rule-based content.
 const normalize = (raw) => {
   const a = raw.assessment && typeof raw.assessment === 'object' ? raw.assessment : null;
@@ -65,7 +81,8 @@ const normalize = (raw) => {
         ? raw.reply.trim()
         : 'Sorry, I could not form a reply. Could you rephrase that?',
     mode: ['asking', 'assessment', 'info'].includes(raw.mode) ? raw.mode : 'info',
-    followUpQuestions: strings(raw.followUpQuestions).slice(0, 3),
+    title: typeof raw.conversationTitle === 'string' ? raw.conversationTitle.trim().slice(0, 80) : '',
+    questions: normalizeQuestions(raw.questions),
     isEmergency,
     assessment: a
       ? {
@@ -98,15 +115,23 @@ const normalize = (raw) => {
   };
 };
 
-exports.generateReply = async ({ profile, history, message }) => {
+exports.generateReply = async ({ profile, history, message, importedContext }) => {
+  let system = `${SYSTEM_PROMPT}\n\n${formatContext(profile)}`;
+  if (importedContext) {
+    system +=
+      '\n\nIMPORTED HISTORY (a summary of the patient\'s earlier chats, imported by the patient). ' +
+      'Treat it as background and use it only where relevant:\n' +
+      importedContext;
+  }
+
   const messages = [
-    { role: 'system', content: `${SYSTEM_PROMPT}\n\n${formatContext(profile)}` },
+    { role: 'system', content: system },
     ...history.slice(-HISTORY_LIMIT).map((m) => ({ role: m.role, content: m.content })),
     { role: 'user', content: message }
   ];
 
   const completion = await getClient().chat.completions.create({
-    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    model: getModel(),
     messages,
     temperature: 0.3,
     max_tokens: 3000,
@@ -121,4 +146,36 @@ exports.generateReply = async ({ profile, history, message }) => {
     parsed = { reply: text, mode: 'info' };
   }
   return normalize(parsed);
+};
+
+// Condenses past chats into a short brief the assistant can use as context
+exports.summarizeConversations = async (conversations) => {
+  const transcript = conversations
+    .map((c) => {
+      const lines = c.messages
+        .slice(-30)
+        .map((m) => `${m.role === 'user' ? 'Patient' : 'Assistant'}: ${m.content}`);
+      return `--- Chat "${c.title}" (${new Date(c.updatedAt).toDateString()}) ---\n${lines.join('\n')}`;
+    })
+    .join('\n\n')
+    .slice(0, 12000);
+
+  const completion = await getClient().chat.completions.create({
+    model: getModel(),
+    messages: [
+      {
+        role: 'system',
+        content:
+          "You condense a patient's earlier health chats into a brief for an AI triage assistant. " +
+          'Write at most 180 words of plain text covering: symptoms discussed and their timeline, ' +
+          'assessments or advice given, health facts the patient stated (conditions, medications, allergies), ' +
+          'and anything left unresolved. Use only what is in the transcript. Do not add or infer anything.'
+      },
+      { role: 'user', content: transcript }
+    ],
+    temperature: 0.2,
+    max_tokens: 1500
+  });
+
+  return (completion.choices[0]?.message?.content || '').trim();
 };
