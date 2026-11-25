@@ -7,6 +7,9 @@ const { initializeSocket } = require('./socket/socketHandler');
 // Fail fast if the encryption master key is missing or malformed
 require('./utils/crypto').assertConfigured();
 
+// Same for the blockchain settings (only checked when BLOCKCHAIN_ENABLED=true)
+require('./services/blockchainService').assertConfigured();
+
 // Routes
 const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
@@ -20,6 +23,9 @@ const app = express();
 
 // Connect to MongoDB
 connectDB();
+
+// Blockchain write queue: starts sending once MongoDB is connected
+require('mongoose').connection.once('open', () => require('./services/chainOutbox').startWorker());
 
 // Middleware
 app.use(cors({

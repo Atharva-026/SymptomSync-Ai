@@ -17,6 +17,7 @@ const {
 const { idOf, wrapFor, upsertKeyGrant } = require('../services/recordKeys');
 const { readDecryptedFile } = require('../services/recordFiles');
 const { logAccess } = require('../services/accessLog');
+const chain = require('../services/chainAnchors');
 
 const WITH_KEYS = '+ownerWrappedKey +keyGrants +encryption';
 const DEFAULT_LINK_HOURS = 24;
@@ -162,6 +163,9 @@ exports.uploadRecord = async (req, res) => {
         req,
       });
 
+      // Register the file's fingerprint + owner on the blockchain (queued, never blocks the upload)
+      await chain.recordUploaded(record);
+
       res.status(201).json({ success: true, data: record });
     } catch (err) {
       // Do not leave orphaned ciphertext behind if saving the record failed
@@ -252,9 +256,20 @@ exports.downloadFile = async (req, res) => {
     const access = await resolveRecordAccess(record, req.user);
     if (!access.allowed) return fail(res, 403, 'Not authorized to view this file');
 
+    // Second gate: the blockchain must agree (falls back to MongoDB if the chain is down)
+    const gate = await chain.gate(record, { user: req.user.id });
+    if (!gate.ok) return fail(res, gate.status, gate.reason);
+
     const buffer = await readDecryptedFile(record, access.wrappedKey, access.keyUserId);
 
-    await logAccess(record._id, { actor: req.user.id, via: access.via, action: 'download', req });
+    await logAccess(record._id, {
+      actor: req.user.id,
+      via: access.via,
+      action: 'download',
+      req,
+      meta: { chain: gate.source },
+    });
+    await chain.accessLogged(record, { user: req.user.id }, 'download');
     sendFile(res, record, buffer);
   } catch (error) {
     sendFileError(res, error);
@@ -281,9 +296,13 @@ exports.createShareLink = async (req, res) => {
     const expiresAt = new Date(now.getTime() + hours * 60 * 60 * 1000);
 
     // Drop expired links while we are here; keep only the hash of the new one
+    const tokenHash = sha256(token);
     record.shareLinks = (record.shareLinks || []).filter((l) => l.expiresAt > now);
-    record.shareLinks.push({ tokenHash: sha256(token), expiresAt, createdBy: req.user.id });
+    record.shareLinks.push({ tokenHash, expiresAt, createdBy: req.user.id });
     await record.save();
+
+    // The contract itself will stop honouring this link at `expiresAt`
+    await chain.linkCreated(record, tokenHash, expiresAt);
 
     await logAccess(record._id, {
       actor: req.user.id,
@@ -308,11 +327,13 @@ exports.createShareLink = async (req, res) => {
 // @access  Private (patient who owns the record)
 exports.revokeShareLinks = async (req, res) => {
   try {
-    const record = await loadRecord(req, res);
+    const record = await loadRecord(req, res, '+shareLinks');
     if (!record) return;
     if (record.patient.toString() !== req.user.id) return fail(res, 403, 'Not authorized');
 
+    const revokedHashes = (record.shareLinks || []).map((l) => l.tokenHash);
     await MedicalRecord.updateOne({ _id: record._id }, { $set: { shareLinks: [] } });
+    await chain.linksRevoked(record, revokedHashes);
     await logAccess(record._id, {
       actor: req.user.id,
       via: 'owner',
@@ -356,6 +377,8 @@ async function grantDoctorViaLink(record, doctorId, linkExpiry) {
       }
     );
   }
+
+  await chain.doctorGranted(record, doctorId, linkExpiry);
 }
 
 // @desc    Record details via share token (QR scan)
@@ -421,9 +444,14 @@ exports.downloadSharedFile = async (req, res) => {
     if (!record) return fail(res, 404, 'Record not found or link expired');
     if (link.expiresAt <= new Date()) return fail(res, 410, 'This share link has expired');
 
+    // The QR link is its own identity on-chain; the contract knows when it expires
+    const gate = await chain.gate(record, { link: link.tokenHash });
+    if (!gate.ok) return fail(res, gate.status, gate.reason);
+
     const buffer = await readDecryptedFile(record, record.ownerWrappedKey, idOf(record.patient));
 
-    await logAccess(record._id, { via: 'share-link', action: 'download', req });
+    await logAccess(record._id, { via: 'share-link', action: 'download', req, meta: { chain: gate.source } });
+    await chain.accessLogged(record, { link: link.tokenHash }, 'download');
     sendFile(res, record, buffer);
   } catch (error) {
     sendFileError(res, error);
@@ -460,6 +488,7 @@ exports.shareWithDoctor = async (req, res) => {
     const expiry = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
     await upsertKeyGrant(record._id, doctorId, wrapFor(record, doctorId), expiry);
+    await chain.doctorGranted(record, doctorId, expiry);
 
     if (existing) {
       // Previous share had expired: renew it
@@ -505,6 +534,9 @@ exports.analyzeRecord = async (req, res) => {
 
     const access = await resolveRecordAccess(record, req.user);
     if (!access.allowed) return fail(res, 403, 'Not authorized');
+
+    const gate = await chain.gate(record, { user: req.user.id });
+    if (!gate.ok) return fail(res, gate.status, gate.reason);
 
     // If already analyzed, return existing analysis
     if (record.aiAnalysis && record.aiAnalysis.summary) {
@@ -579,6 +611,23 @@ exports.deleteRecord = async (req, res) => {
     res.status(200).json({ success: true, message: 'Record deleted successfully' });
   } catch (error) {
     console.error('Delete record error:', error);
+    fail(res, 500, 'Server error');
+  }
+};
+
+// @desc    Check a record against the blockchain (is its hash registered and unchanged?)
+// @route   GET /api/medical-records/:id/chain
+// @access  Private (patient who owns the record)
+exports.verifyOnChain = async (req, res) => {
+  try {
+    const record = await loadRecord(req, res);
+    if (!record) return;
+    if (record.patient.toString() !== req.user.id) return fail(res, 403, 'Not authorized');
+
+    const data = await chain.verifyRecord(record, req.user.id);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('Chain verify error:', error);
     fail(res, 500, 'Server error');
   }
 };

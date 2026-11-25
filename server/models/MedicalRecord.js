@@ -79,7 +79,12 @@ const medicalRecordSchema = new mongoose.Schema(
       ),
       select: false,
     },
-    fileHash: { type: String }, // SHA-256 of the ciphertext (tamper check / future on-chain anchor)
+    fileHash: { type: String }, // SHA-256 of the ciphertext (tamper check, anchored on-chain)
+    // Set by the blockchain outbox worker once registerRecord is mined
+    chain: {
+      txHash: String,
+      anchoredAt: Date,
+    },
     ownerWrappedKey: { type: String, select: false },
     keyGrants: { type: [keyGrantSchema], select: false },
     shareLinks: { type: [shareLinkSchema], select: false },

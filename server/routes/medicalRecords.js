@@ -11,7 +11,8 @@ const {
   shareWithDoctor,
   analyzeRecord,
   deleteRecord,
-  getSharedRecords
+  getSharedRecords,
+  verifyOnChain
 } = require('../controllers/medicalRecordController');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -40,6 +41,9 @@ router
 
 // Decrypted file (owner, family with viewRecords, doctor it was shared with)
 router.get('/:id/file', protect, downloadFile);
+
+// Verify the record against the blockchain
+router.get('/:id/chain', protect, authorize('patient'), verifyOnChain);
 
 // Create / revoke QR links
 router
