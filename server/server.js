@@ -13,6 +13,7 @@ const assessmentRoutes = require('./routes/assessments');
 const medicalRecordRoutes = require('./routes/medicalRecords');
 const familyAccessRoutes = require('./routes/familyAccess'); // Family Access Routes
 const providerRoutes = require('./routes/providers');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/providers', providerRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Serve static files (uploaded files)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

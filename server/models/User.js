@@ -70,6 +70,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['male', 'female', 'other', 'prefer-not-to-say']
   },
+  age: {
+    type: Number
+  },
   
   // Doctor-specific fields
   specialty: {

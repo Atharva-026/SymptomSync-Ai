@@ -18,7 +18,7 @@ router.get('/', auth, getAssessments);
 
 // --- AI ENDPOINTS (must be before /:id) ---
 
-router.post('/analyze', async (req, res) => {
+router.post('/analyze', auth, async (req, res) => {
     try {
         const { symptoms, age, gender, comorbidities } = req.body;
 
@@ -87,7 +87,7 @@ riskLevel must be: "low" (0-39) / "moderate" (40-74) / "high" (75-89) / "emergen
     }
 });
 
-router.post('/risk', async (req, res) => {
+router.post('/risk', auth, async (req, res) => {
     try {
         const { symptoms, painLevel, age, comorbidities } = req.body;
 

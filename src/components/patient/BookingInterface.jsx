@@ -111,7 +111,7 @@ const BookingInterface = ({ assessmentData, riskLevel, onBookingComplete }) => {
     return 'General Physician';
   };
 
-  const recommendedSpecialty = getRecommendedSpecialty();
+  const recommendedSpecialty = assessmentData?.recommendedSpecialty || getRecommendedSpecialty();
 
   const handleDoctorSelect = (doctor) => {
     setSelectedDoctor(doctor);
