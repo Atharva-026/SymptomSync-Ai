@@ -113,15 +113,6 @@ const medicalRecordSchema = new mongoose.Schema(
         },
       },
     ],
-    // AI Analysis
-    aiAnalysis: {
-      summary: String,
-      keyFindings: [String],
-      abnormalValues: [String],
-      recommendations: [String],
-      analyzedAt: Date,
-      model: String, // which AI model was used
-    },
     // Metadata
     tags: [String],
     isPrivate: {

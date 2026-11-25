@@ -99,16 +99,6 @@ const medicalRecordService = {
     }
   },
 
-  // Request AI analysis
-  analyzeRecord: async (recordId) => {
-    try {
-      const response = await api.post(`/medical-records/${recordId}/analyze`);
-      return response.data.data;
-    } catch (error) {
-      throw error.response?.data?.message || 'Failed to analyze record';
-    }
-  },
-
   // Delete record
   deleteRecord: async (recordId) => {
     try {

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Alert, Spinner, Button, Badge, Row, Col } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaFilePdf, FaFileImage, FaDownload, FaArrowLeft, FaRobot } from 'react-icons/fa';
+import { FaFilePdf, FaFileImage, FaDownload, FaArrowLeft } from 'react-icons/fa';
 import medicalRecordService from '../services/medicalRecordService';
 import { useAuth } from '../context/AuthContext';
-import AIAnalysisModal from '../components/medical/AIAnalysisModal';
 
 const ViewSharedRecord = () => {
   const { token } = useParams();
@@ -14,7 +13,6 @@ const ViewSharedRecord = () => {
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showAIModal, setShowAIModal] = useState(false);
   const [fileError, setFileError] = useState('');
 
   useEffect(() => {
@@ -141,13 +139,6 @@ const ViewSharedRecord = () => {
               View Full Record
             </Button>
             {fileError && <Alert variant="danger" className="mb-0">{fileError}</Alert>}
-            {/* AI analysis needs a login; anonymous QR viewers only see the file */}
-            {user && (
-              <Button variant="outline-info" size="lg" onClick={() => setShowAIModal(true)}>
-                <FaRobot className="me-2" />
-                AI Analysis
-              </Button>
-            )}
           </div>
 
           {/* Doctor Access Info */}
@@ -174,12 +165,6 @@ const ViewSharedRecord = () => {
         </Card.Body>
       </Card>
 
-      {/* AI Analysis Modal */}
-      <AIAnalysisModal
-        show={showAIModal}
-        onHide={() => setShowAIModal(false)}
-        record={record}
-      />
     </Container>
   );
 };

@@ -9,7 +9,6 @@ const {
   getRecordByToken,
   downloadSharedFile,
   shareWithDoctor,
-  analyzeRecord,
   deleteRecord,
   getSharedRecords
 } = require('../controllers/medicalRecordController');
@@ -49,8 +48,5 @@ router
 
 // Share with doctor
 router.post('/:id/share', protect, authorize('patient'), shareWithDoctor);
-
-// AI Analysis
-router.post('/:id/analyze', protect, analyzeRecord);
 
 module.exports = router;
