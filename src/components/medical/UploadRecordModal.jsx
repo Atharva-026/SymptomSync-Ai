@@ -3,7 +3,9 @@ import { Modal, Form, Button, Alert, Spinner, ProgressBar } from 'react-bootstra
 import { FaUpload, FaFilePdf, FaFileImage, FaCheckCircle } from 'react-icons/fa';
 import medicalRecordService from '../../services/medicalRecordService';
 
-const UploadRecordModal = ({ show, onHide, onUploadSuccess }) => {
+// `patientId` is set when a family member uploads on behalf of a patient
+// (requires the "uploadRecords" permission); the server verifies it.
+const UploadRecordModal = ({ show, onHide, onUploadSuccess, patientId, patientName }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -75,6 +77,7 @@ const UploadRecordModal = ({ show, onHide, onUploadSuccess }) => {
       uploadData.append('recordType', formData.recordType);
       uploadData.append('recordDate', formData.recordDate || new Date().toISOString());
       uploadData.append('tags', formData.tags);
+      if (patientId) uploadData.append('patientId', patientId);
 
       // Simulate progress (since we don't have real progress tracking)
       const progressInterval = setInterval(() => {
@@ -130,7 +133,7 @@ const UploadRecordModal = ({ show, onHide, onUploadSuccess }) => {
       <Modal.Header closeButton>
         <Modal.Title>
           <FaUpload className="me-2" />
-          Upload Medical Record
+          {patientId ? `Upload Record for ${patientName || 'Patient'}` : 'Upload Medical Record'}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -138,7 +141,7 @@ const UploadRecordModal = ({ show, onHide, onUploadSuccess }) => {
         {success && (
           <Alert variant="success">
             <FaCheckCircle className="me-2" />
-            Record uploaded successfully!
+            Record encrypted and uploaded successfully!
           </Alert>
         )}
 

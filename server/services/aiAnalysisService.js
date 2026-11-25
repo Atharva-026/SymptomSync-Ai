@@ -1,35 +1,36 @@
-const fs = require('fs');
 const pdfParse = require('pdf-parse');
 
 console.log('✅ aiAnalysisService.js loaded with Grok integration');
 
-exports.analyzeWithAI = async (filePath, fileType, patientSymptoms = null) => {
+// Files are stored encrypted, so analysis works on the decrypted in-memory
+// buffer - never on a path on disk.
+exports.analyzeWithAI = async (fileBuffer, fileType, patientSymptoms = null, fileName = '') => {
   console.log('🔬 analyzeWithAI CALLED');
-  console.log('File:', filePath);
   console.log('Type:', fileType);
-  console.log('Patient symptoms:', patientSymptoms);
 
   try {
     if (fileType.startsWith('image/')) {
-      return await analyzeImageWithGrok(filePath, fileType, patientSymptoms);
+      return await analyzeImageWithGrok(fileBuffer, fileType, patientSymptoms, fileName);
     } else if (fileType === 'application/pdf') {
-      return await analyzePDFWithGrok(filePath, patientSymptoms);
+      return await analyzePDFWithGrok(fileBuffer, patientSymptoms);
     }
   } catch (error) {
     console.error('Error:', error.message);
     return getSymptomBasedMockAnalysis(fileType, patientSymptoms);
   }
+
+  // Other types (e.g. DOC/DOCX) have no dedicated analyzer
+  return getSymptomBasedMockAnalysis(fileType, patientSymptoms);
 };
 
 // Analyze images with Grok (or intelligent mock)
-async function analyzeImageWithGrok(filePath, fileType, symptoms) {
-  const fileName = filePath.split(/[/\\]/).pop().toLowerCase();
-  
+async function analyzeImageWithGrok(imageData, fileType, symptoms, originalName = '') {
+  const fileName = originalName.toLowerCase();
+
   // Check if Grok API is available
   if (process.env.GROK_API_KEY) {
     try {
       console.log('Attempting Grok image analysis...');
-      const imageData = fs.readFileSync(filePath);
       const base64 = imageData.toString('base64');
 
       const response = await fetch('https://api.x.ai/v1/chat/completions', {
@@ -73,9 +74,8 @@ async function analyzeImageWithGrok(filePath, fileType, symptoms) {
 }
 
 // Analyze PDFs with Grok (or intelligent mock)
-async function analyzePDFWithGrok(filePath, symptoms) {
+async function analyzePDFWithGrok(dataBuffer, symptoms) {
   try {
-    const dataBuffer = fs.readFileSync(filePath);
     const data = await pdfParse(dataBuffer);
     const text = data.text.substring(0, 5000);
     
