@@ -155,9 +155,10 @@ const ChatAssistant = ({ onBookAppointment }) => {
 
   const handleBook = (assessment) => {
     onBookAppointment?.({
-      symptoms: firstUserMessage,
+      symptoms: activeTitle !== 'New chat' ? activeTitle : firstUserMessage,
       riskLevel: assessment.riskScore,
-      recommendedSpecialty: assessment.recommendedSpecialty
+      recommendedSpecialty: assessment.recommendedSpecialty,
+      conversationId
     });
   };
 

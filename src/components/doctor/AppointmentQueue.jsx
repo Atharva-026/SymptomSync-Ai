@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, ListGroup, Badge, Button, Row, Col } from 'react-bootstrap';
-import { FaVideo, FaEye, FaCheckCircle } from 'react-icons/fa';
+import { FaVideo, FaEye } from 'react-icons/fa';
 
 const AppointmentQueue = ({ appointments, onStartCall, onViewDetails }) => {
   const getStatusColor = (status) => {
@@ -42,9 +42,11 @@ const AppointmentQueue = ({ appointments, onStartCall, onViewDetails }) => {
                       </Badge>
                       {getPriorityBadge(apt.riskLevel || 0)}
                       {apt.isUrgent && <Badge bg="danger">Urgent</Badge>}
+                      {apt.assessment?.brief && <Badge bg="info" text="dark">AI brief</Badge>}
                     </div>
                     <small className="text-muted d-block">
-                      <strong>Symptoms:</strong> {apt.assessment?.symptoms || 'N/A'}
+                      <strong>Complaint:</strong>{' '}
+                      {apt.assessment?.brief?.chiefComplaint || apt.assessment?.symptoms || 'N/A'}
                     </small>
                   </Col>
                   <Col md={3}>

@@ -13,6 +13,9 @@ const conversationSchema = new mongoose.Schema({
   title: { type: String, default: 'New chat' },
   // Summary of earlier chats the patient chose to import
   importedContext: { type: String, default: '' },
+  // Latest doctor brief generated for the booking preview
+  brief: { type: mongoose.Schema.Types.Mixed },
+  briefMessageCount: { type: Number },
   messages: [messageSchema]
 }, { timestamps: true });
 

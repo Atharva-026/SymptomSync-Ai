@@ -7,6 +7,8 @@ const chatService = {
   },
   importContext: async (conversationIds) => (await api.post('/chat/import', { conversationIds })).data,
   getContext: async () => (await api.get('/chat/context')).data,
+  createBrief: async (conversationId) =>
+    (await api.post(`/chat/conversations/${conversationId}/brief`)).data,
   clearContext: async () => (await api.delete('/chat/context')).data,
   listConversations: async () => (await api.get('/chat/conversations')).data,
   getConversation: async (id) => (await api.get(`/chat/conversations/${id}`)).data,
