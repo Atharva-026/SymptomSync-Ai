@@ -2,6 +2,19 @@
 
 const User = require('../models/User');
 const { sendEmail } = require('../services/emailService');
+const { grantAllRecords, revokeAllRecords } = require('../services/recordKeys');
+
+// Give a family member the keys to the patient's encrypted records. A failure
+// is logged, not fatal: the download endpoint re-creates a missing grant on
+// first use as long as the live permission is still valid.
+const syncGrantsSafely = async (patientId, memberId) => {
+  try {
+    const count = await grantAllRecords(patientId, memberId);
+    console.log(`🔑 Granted record keys (${count} records) to family member ${memberId}`);
+  } catch (err) {
+    console.error('⚠️ Granting record keys failed:', err.message);
+  }
+};
 
 /**
  * Send family member invitation
@@ -86,6 +99,11 @@ exports.inviteFamilyMember = async (req, res) => {
     });
     await familyMember.save();
 
+    // Auto-accepted invite (approval not required): hand over record keys now
+    if (newFamilyMember.status === 'accepted' && newFamilyMember.permissions.viewRecords) {
+      await syncGrantsSafely(patientId, familyMember._id);
+    }
+
     // Send email notification - FIXED to match your emailService
     try {
       if (familyMember.email) {
@@ -166,6 +184,11 @@ exports.respondToInvitation = async (req, res) => {
       accessRequest.grantedAt = new Date();
     }
     await familyMember.save();
+
+    // Accepted: give them the keys to the patient's existing records
+    if (newStatus === 'accepted' && accessRequest.permissions && accessRequest.permissions.viewRecords) {
+      await syncGrantsSafely(patientId, familyMemberId);
+    }
 
     const patient = await User.findById(patientId);
     const familyMemberEntry = patient.familyMembers?.find(
@@ -314,11 +337,23 @@ exports.updatePermissions = async (req, res) => {
       return res.status(404).json({ message: 'Family member not found' });
     }
 
+    const hadViewRecords = !!(familyMemberEntry.permissions && familyMemberEntry.permissions.viewRecords);
+
     familyMemberEntry.permissions = {
       ...familyMemberEntry.permissions,
       ...permissions
     };
     await patient.save();
+
+    // Keep record keys in step with the viewRecords permission
+    if (familyMemberEntry.status === 'accepted') {
+      const hasViewRecords = !!familyMemberEntry.permissions.viewRecords;
+      if (hasViewRecords && !hadViewRecords) {
+        await syncGrantsSafely(patientId, familyMemberId);
+      } else if (!hasViewRecords && hadViewRecords) {
+        await revokeAllRecords(patientId, familyMemberId);
+      }
+    }
 
     const familyMember = await User.findById(familyMemberId);
     if (familyMember && familyMember.accessToPatients) {
@@ -367,6 +402,10 @@ exports.revokeFamilyAccess = async (req, res) => {
 
     familyMemberEntry.status = 'revoked';
     await patient.save();
+
+    // Remove their keys to every record. Not swallowed on purpose: if this
+    // fails the patient should see an error and can safely retry.
+    await revokeAllRecords(patientId, familyMemberId);
 
     const familyMember = await User.findById(familyMemberId);
     if (familyMember && familyMember.accessToPatients) {

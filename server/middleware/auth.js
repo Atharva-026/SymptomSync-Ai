@@ -32,6 +32,29 @@ const auth = async (req, res, next) => {
   }
 };
 
+// Optional auth: sets req.user when a valid token is sent, but never rejects.
+// Used by public routes (e.g. QR links) that behave differently for logged-in doctors.
+const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id).select('-password');
+      if (user) {
+        req.user = {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+          name: user.name
+        };
+      }
+    }
+  } catch (error) {
+    // Invalid / expired token on a public route: treat as anonymous
+  }
+  next();
+};
+
 // Authorize middleware - checks user role
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -53,3 +76,4 @@ const authorize = (...roles) => {
 module.exports = auth;
 module.exports.protect = auth;  // Alias so 'protect' works
 module.exports.authorize = authorize;
+module.exports.optionalAuth = optionalAuth;

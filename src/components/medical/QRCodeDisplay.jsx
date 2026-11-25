@@ -1,82 +1,80 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, Button, Alert, Card } from 'react-bootstrap';
-import { FaQrcode, FaDownload, FaCopy, FaCheckCircle } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Alert, Card, Form, Spinner } from 'react-bootstrap';
+import { FaQrcode, FaDownload, FaCopy, FaCheckCircle, FaBan } from 'react-icons/fa';
 import QRCode from 'qrcode';
+import medicalRecordService from '../../services/medicalRecordService';
+
+const DURATIONS = [
+  { hours: 1, label: '1 hour' },
+  { hours: 6, label: '6 hours' },
+  { hours: 24, label: '24 hours' },
+  { hours: 72, label: '3 days' },
+];
 
 const QRCodeDisplay = ({ show, onHide, record }) => {
-  const [copied, setCopied] = useState(false);
+  const [hours, setHours] = useState(24);
+  const [link, setLink] = useState(null); // { url, expiresAt }
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const generateQRCode = useCallback(async () => {
-    if (!record) return;
-    
-    try {
-      // Create medical record data object
-      const medicalRecordData = {
-        type: 'MEDICAL_RECORD',
-        recordId: record._id || record.id || '',
-        patientName: record.patientName || 'Unknown',
-        title: record.title || 'Medical Record',
-        description: record.description || '',
-        diagnosis: record.diagnosis || '',
-        prescription: record.prescription || '',
-        date: record.date || new Date().toISOString(),
-        doctorName: record.doctorName || '',
-      };
-
-      // Convert to JSON string
-      const jsonString = JSON.stringify(medicalRecordData);
-      console.log('📱 Generating QR code with data:', jsonString);
-
-      // Generate QR code as data URL
-      const dataUrl = await QRCode.toDataURL(jsonString, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-
-      setQrCodeDataUrl(dataUrl);
-      console.log('✅ QR Code generated successfully');
-
-    } catch (error) {
-      console.error('❌ Error generating QR code:', error);
-    }
-  }, [record]);
-
+  // Start fresh every time the modal opens or a different record is chosen.
+  // A link is only created on request, and its token is shown just once.
   useEffect(() => {
-    if (record && show) {
-      generateQRCode();
-    }
-  }, [record, show, generateQRCode]);
+    setLink(null);
+    setQrCodeDataUrl('');
+    setError('');
+    setCopied(false);
+  }, [show, record?._id]);
 
   if (!record) return null;
 
-  const shareUrl = record.shareToken 
-    ? `${window.location.origin}/records/view/${record.shareToken}`
-    : `${window.location.origin}/records/view/${record._id || record.id}`;
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setError('');
+    try {
+      const created = await medicalRecordService.createShareLink(record._id, hours);
+      // The QR contains ONLY an expiring link - no medical details.
+      const dataUrl = await QRCode.toDataURL(created.url, {
+        width: 300,
+        margin: 2,
+        color: { dark: '#000000', light: '#FFFFFF' },
+      });
+      setLink({ url: created.url, expiresAt: created.expiresAt });
+      setQrCodeDataUrl(dataUrl);
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Failed to create QR code');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRevoke = async () => {
+    if (!window.confirm('Stop all active QR links for this record?')) return;
+    try {
+      await medicalRecordService.revokeShareLinks(record._id);
+      setLink(null);
+      setQrCodeDataUrl('');
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Failed to revoke links');
+    }
+  };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
+    navigator.clipboard.writeText(link.url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownloadQR = () => {
-    if (!qrCodeDataUrl) {
-      alert('QR Code not generated yet. Please wait...');
-      return;
-    }
-
-    // Create download link for QR code
-    const link = document.createElement('a');
-    link.href = qrCodeDataUrl;
-    link.download = `${record.title || 'medical-record'}-QRCode.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    if (!qrCodeDataUrl) return;
+    const anchor = document.createElement('a');
+    anchor.href = qrCodeDataUrl;
+    anchor.download = `${record.title || 'medical-record'}-QRCode.png`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
   };
 
   return (
@@ -89,76 +87,100 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
       </Modal.Header>
       <Modal.Body>
         <Alert variant="info">
-          <strong>📱 How to share:</strong>
+          <strong>📱 How it works:</strong>
           <ul className="mb-0 mt-2">
-            <li>Show this QR code to your doctor</li>
-            <li>Doctor scans with their phone camera or QR scanner</li>
-            <li>Instant secure access to your record</li>
+            <li>Create a QR code that works for a limited time only</li>
+            <li>Your doctor scans it - no account needed</li>
+            <li>The link stops working automatically when the time is up</li>
           </ul>
         </Alert>
 
         <Card className="border-0 bg-light mb-4">
           <Card.Body>
             <h6 className="mb-2">{record.title || 'Medical Record'}</h6>
-            <p className="small text-muted mb-0">
-              {record.description || 'No description'}
-            </p>
+            <p className="small text-muted mb-0">{record.description || 'No description'}</p>
           </Card.Body>
         </Card>
 
-        {/* QR Code Display */}
-        <div className="text-center mb-4">
-          {qrCodeDataUrl ? (
-            <div className="bg-white p-4 rounded shadow-sm d-inline-block">
-              <img
-                src={qrCodeDataUrl}
-                alt="QR Code"
-                style={{ width: '300px', height: '300px' }}
-                className="img-fluid"
-              />
-            </div>
-          ) : (
-            <div className="bg-white p-4 rounded shadow-sm d-inline-block">
-              <div style={{ width: '300px', height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Generating QR Code...</span>
-                </div>
-              </div>
-            </div>
-          )}
-          <p className="text-muted small mt-3">
-            Scan this QR code with a smartphone camera or QR scanner app
-          </p>
-        </div>
+        {error && <Alert variant="danger">{error}</Alert>}
 
-        {/* Share Link */}
-        <Card className="border-primary">
-          <Card.Body>
-            <div className="d-flex align-items-center justify-content-between mb-2">
-              <strong className="small">Share Link:</strong>
-              <Button
-                variant={copied ? 'success' : 'outline-primary'}
-                size="sm"
-                onClick={handleCopyLink}
+        {!link ? (
+          <div className="text-center mb-4">
+            <Form.Group className="mb-3 d-inline-block text-start">
+              <Form.Label>QR code is valid for</Form.Label>
+              <Form.Select
+                value={hours}
+                onChange={(e) => setHours(Number(e.target.value))}
+                disabled={generating}
               >
-                {copied ? (
+                {DURATIONS.map((d) => (
+                  <option key={d.hours} value={d.hours}>
+                    {d.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <div>
+              <Button variant="primary" onClick={handleGenerate} disabled={generating}>
+                {generating ? (
                   <>
-                    <FaCheckCircle className="me-1" />
-                    Copied!
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Creating...
                   </>
                 ) : (
                   <>
-                    <FaCopy className="me-1" />
-                    Copy Link
+                    <FaQrcode className="me-2" />
+                    Create QR Code
                   </>
                 )}
               </Button>
             </div>
-            <div className="bg-light p-2 rounded">
-              <small className="text-break font-monospace">{shareUrl}</small>
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-4">
+              <div className="bg-white p-4 rounded shadow-sm d-inline-block">
+                <img
+                  src={qrCodeDataUrl}
+                  alt="QR Code"
+                  style={{ width: '300px', height: '300px' }}
+                  className="img-fluid"
+                />
+              </div>
+              <p className="text-muted small mt-3 mb-0">
+                Valid until <strong>{new Date(link.expiresAt).toLocaleString()}</strong>
+              </p>
             </div>
-          </Card.Body>
-        </Card>
+
+            <Card className="border-primary">
+              <Card.Body>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <strong className="small">Share Link:</strong>
+                  <Button
+                    variant={copied ? 'success' : 'outline-primary'}
+                    size="sm"
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? (
+                      <>
+                        <FaCheckCircle className="me-1" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <FaCopy className="me-1" />
+                        Copy Link
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="bg-light p-2 rounded">
+                  <small className="text-break font-monospace">{link.url}</small>
+                </div>
+              </Card.Body>
+            </Card>
+          </>
+        )}
 
         {/* Shared With */}
         {record.sharedWith && record.sharedWith.length > 0 && (
@@ -167,8 +189,7 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
             <ul className="mb-0 mt-2">
               {record.sharedWith.map((share, index) => (
                 <li key={index}>
-                  {share.doctor?.name || 'Unknown Doctor'} - 
-                  {share.accessCount} access(es)
+                  {share.doctor?.name || 'Unknown Doctor'} - {share.accessCount} access(es)
                 </li>
               ))}
             </ul>
@@ -177,15 +198,18 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
 
         {/* Action Buttons */}
         <div className="d-flex gap-2 mt-4">
-          <Button 
-            variant="outline-primary" 
-            onClick={handleDownloadQR} 
-            className="flex-fill"
-            disabled={!qrCodeDataUrl}
-          >
-            <FaDownload className="me-2" />
-            Download QR Code
-          </Button>
+          {link && (
+            <>
+              <Button variant="outline-primary" onClick={handleDownloadQR} className="flex-fill">
+                <FaDownload className="me-2" />
+                Download QR Code
+              </Button>
+              <Button variant="outline-danger" onClick={handleRevoke} className="flex-fill">
+                <FaBan className="me-2" />
+                Stop Sharing
+              </Button>
+            </>
+          )}
           <Button variant="primary" onClick={onHide} className="flex-fill">
             Done
           </Button>
@@ -193,8 +217,9 @@ const QRCodeDisplay = ({ show, onHide, record }) => {
 
         <Alert variant="warning" className="mt-3 mb-0">
           <small>
-            <strong>⚠️ Privacy Notice:</strong> Anyone with this QR code can view this
-            record. Only share with trusted healthcare providers.
+            <strong>⚠️ Privacy Notice:</strong> Anyone who scans this QR code can view the
+            record until it expires. Only show it to trusted healthcare providers, and use
+            "Stop Sharing" if it was seen by the wrong person.
           </small>
         </Alert>
       </Modal.Body>

@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const { initializeSocket } = require('./socket/socketHandler');
-const path = require('path');
+
+// Fail fast if the encryption master key is missing or malformed
+require('./utils/crypto').assertConfigured();
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -35,8 +37,9 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/providers', providerRoutes);
 
-// Serve static files (uploaded files)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// NOTE: there is intentionally no static /uploads route. Medical files are
+// stored encrypted in MongoDB (GridFS) and are only served, decrypted, through
+// authenticated endpoints in /api/medical-records.
 
 // Medical records routes
 app.use('/api/medical-records', medicalRecordRoutes);
