@@ -179,3 +179,52 @@ exports.summarizeConversations = async (conversations) => {
 
   return (completion.choices[0]?.message?.content || '').trim();
 };
+
+const BRIEF_PROMPT = `You write a pre-consultation brief for a doctor from a patient's chat with a triage assistant.
+Use ONLY information stated in the transcript. Do not add, infer or diagnose anything. If something was not reported, write "Not reported". Be concise and clinical.
+
+Return ONLY valid JSON in exactly this shape:
+{
+  "chiefComplaint": "one sentence",
+  "history": "2 to 4 sentences covering onset, duration, severity, location, progression, and anything that makes it better or worse, if reported",
+  "pertinentPositives": ["symptoms the patient reports"],
+  "pertinentNegatives": ["symptoms the patient explicitly denies"],
+  "openQuestions": ["up to 4 things the doctor may want to clarify that the chat did not establish"]
+}`;
+
+const textOr = (v, fallback) => (typeof v === 'string' && v.trim() ? v.trim() : fallback);
+
+// Narrative part of the doctor brief. The assessment and patient facts are added by the controller.
+exports.generateBrief = async (conversation) => {
+  const transcript = conversation.messages
+    .slice(-30)
+    .map((m) => `${m.role === 'user' ? 'Patient' : 'Assistant'}: ${m.content}`)
+    .join('\n')
+    .slice(0, 12000);
+
+  const completion = await getClient().chat.completions.create({
+    model: getModel(),
+    messages: [
+      { role: 'system', content: BRIEF_PROMPT },
+      { role: 'user', content: transcript }
+    ],
+    temperature: 0.2,
+    max_tokens: 3000,
+    response_format: { type: 'json_object' }
+  });
+
+  let raw = {};
+  try {
+    raw = JSON.parse(completion.choices[0]?.message?.content || '{}');
+  } catch (e) {
+    raw = {};
+  }
+
+  return {
+    chiefComplaint: textOr(raw.chiefComplaint, 'Not reported'),
+    history: textOr(raw.history, 'Not reported'),
+    pertinentPositives: strings(raw.pertinentPositives).slice(0, 10),
+    pertinentNegatives: strings(raw.pertinentNegatives).slice(0, 10),
+    openQuestions: strings(raw.openQuestions).slice(0, 4)
+  };
+};

@@ -1,7 +1,7 @@
 const Conversation = require('../models/Conversation');
 const PatientContext = require('../models/PatientContext');
 const User = require('../models/User');
-const { generateReply, summarizeConversations } = require('../services/chatService');
+const { generateReply, summarizeConversations, generateBrief } = require('../services/chatService');
 
 const calcAge = (user) => {
   if (!user) return null;
@@ -206,5 +206,67 @@ exports.clearContext = async (req, res) => {
     res.json({ success: true, message: 'Saved health context cleared' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// POST /api/chat/conversations/:id/brief
+// Builds the doctor brief from the saved conversation and stores it for the booking preview.
+exports.createBrief = async (req, res) => {
+  try {
+    const conversation = await Conversation.findOne({ _id: req.params.id, patient: req.user.id });
+    if (!conversation) {
+      return res.status(404).json({ success: false, message: 'Conversation not found' });
+    }
+    if (conversation.messages.length < 2) {
+      return res.status(400).json({ success: false, message: 'Chat with the assistant first so there is something to summarise.' });
+    }
+
+    const [user, ctx, narrative] = await Promise.all([
+      User.findById(req.user.id).select('age gender dateOfBirth'),
+      PatientContext.findOne({ patient: req.user.id }),
+      generateBrief(conversation)
+    ]);
+
+    // Use the assessment the patient already saw (not a regenerated one)
+    const lastAssessmentMsg = [...conversation.messages]
+      .reverse()
+      .find((m) => m.role === 'assistant' && m.structured?.assessment);
+    const a = lastAssessmentMsg?.structured?.assessment || null;
+
+    const brief = {
+      ...narrative,
+      patient: { age: calcAge(user), gender: user?.gender || null },
+      statedHistory: {
+        conditions: ctx?.conditions || [],
+        medications: ctx?.medications || [],
+        allergies: ctx?.allergies || []
+      },
+      aiAssessment: a
+        ? {
+            riskLevel: a.riskLevel,
+            riskScore: a.riskScore,
+            conditions: a.conditions,
+            redFlags: a.redFlags,
+            recommendedSpecialty: a.recommendedSpecialty,
+            confidence: a.confidence
+          }
+        : null,
+      isEmergency: !!lastAssessmentMsg?.structured?.isEmergency,
+      generatedAt: new Date()
+    };
+
+    // timestamps:false so the chat does not jump to the top of the sidebar
+    await Conversation.updateOne(
+      { _id: conversation._id },
+      { $set: { brief, briefMessageCount: conversation.messages.length } },
+      { timestamps: false }
+    );
+
+    res.json({ success: true, data: brief });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ success: false, message: 'Invalid conversation' });
+    }
+    aiError(res, error);
   }
 };

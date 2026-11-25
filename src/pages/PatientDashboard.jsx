@@ -193,6 +193,7 @@ const PatientDashboard = () => {
         additionalSymptoms: []
       }}
       riskLevel={bookingContext?.riskLevel || 0}
+      conversationId={bookingContext?.conversationId}
       onBookingComplete={handleBookingComplete}
     />
   );
