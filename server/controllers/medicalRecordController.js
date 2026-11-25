@@ -5,7 +5,6 @@ const mongoose = require('mongoose');
 
 const MedicalRecord = require('../models/MedicalRecord');
 const User = require('../models/User');
-const { analyzeWithAI } = require('../services/aiAnalysisService');
 const { encryptBuffer, wrapDek, sha256 } = require('../utils/crypto');
 const { saveCiphertext, deleteCiphertext } = require('../utils/gridfs');
 const { matchesDeclaredType } = require('../utils/fileSignature');
@@ -401,7 +400,6 @@ exports.getRecordByToken = async (req, res) => {
         recordDate: record.recordDate,
         uploadDate: record.uploadDate,
         tags: record.tags,
-        aiAnalysis: record.aiAnalysis,
         patient: { name: patient ? patient.name : undefined },
         shareExpiresAt: link.expiresAt,
       },
@@ -490,60 +488,6 @@ exports.shareWithDoctor = async (req, res) => {
   } catch (error) {
     console.error('Share with doctor error:', error);
     fail(res, 500, 'Server error');
-  }
-};
-
-// ------------------------------------------------------------ AI analysis
-
-// @desc    Request AI analysis of medical record
-// @route   POST /api/medical-records/:id/analyze
-// @access  Private
-exports.analyzeRecord = async (req, res) => {
-  try {
-    const record = await loadRecord(req, res, WITH_KEYS);
-    if (!record) return;
-
-    const access = await resolveRecordAccess(record, req.user);
-    if (!access.allowed) return fail(res, 403, 'Not authorized');
-
-    // If already analyzed, return existing analysis
-    if (record.aiAnalysis && record.aiAnalysis.summary) {
-      return res.status(200).json({
-        success: true,
-        data: record.aiAnalysis,
-        message: 'Using cached analysis',
-      });
-    }
-
-    // Decrypt in memory and hand the buffer to the analyzer
-    const buffer = await readDecryptedFile(record, access.wrappedKey, access.keyUserId);
-    const analysis = await analyzeWithAI(
-      buffer,
-      record.fileType,
-      record.description || record.title,
-      record.fileName
-    );
-
-    record.aiAnalysis = {
-      summary: analysis.summary,
-      keyFindings: analysis.keyFindings,
-      abnormalValues: analysis.abnormalValues,
-      recommendations: analysis.recommendations,
-      analyzedAt: new Date(),
-      model: 'gemini-pro',
-    };
-    await record.save();
-
-    await logAccess(record._id, { actor: req.user.id, via: access.via, action: 'analyze', req });
-
-    res.status(200).json({ success: true, data: record.aiAnalysis });
-  } catch (error) {
-    if (error.code === 'LEGACY' || error.code === 'INTEGRITY') return sendFileError(res, error);
-    console.error('AI Analysis Error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to analyze record',
-    });
   }
 };
 

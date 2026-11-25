@@ -6,10 +6,8 @@ import {
   Card,
   Button,
   Badge,
-  ListGroup,
   Alert,
   Spinner,
-  Modal,
 } from 'react-bootstrap';
 import {
   FaUpload,
@@ -17,15 +15,12 @@ import {
   FaEye,
   FaTrash,
   FaShare,
-  FaRobot,
   FaFilePdf,
   FaFileImage,
-  FaDownload,
 } from 'react-icons/fa';
 import medicalRecordService from '../../services/medicalRecordService';
 import UploadRecordModal from './UploadRecordModal';
 import QRCodeDisplay from './QRCodeDisplay';
-import AIAnalysisModal from './AIAnalysisModal';
 import ShareRecordModal from './ShareRecordModal';
 
 const MedicalRecordsDashboard = () => {
@@ -36,7 +31,6 @@ const MedicalRecordsDashboard = () => {
   // Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
-  const [showAIModal, setShowAIModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
@@ -64,11 +58,6 @@ const MedicalRecordsDashboard = () => {
   const handleShowQR = (record) => {
     setSelectedRecord(record);
     setShowQRModal(true);
-  };
-
-  const handleShowAIAnalysis = (record) => {
-    setSelectedRecord(record);
-    setShowAIModal(true);
   };
 
   const handleShowShare = (record) => {
@@ -130,7 +119,9 @@ const MedicalRecordsDashboard = () => {
       <Row className="mb-4">
         <Col>
           <h2 className="h3 mb-2">📋 My Medical Records</h2>
-          <p className="text-muted">Upload, manage, and share your medical documents</p>
+          <p className="text-muted">
+            Upload, store securely, and share your medical documents
+          </p>
         </Col>
         <Col xs="auto">
           <Button variant="primary" size="lg" onClick={() => setShowUploadModal(true)}>
@@ -144,7 +135,7 @@ const MedicalRecordsDashboard = () => {
 
       {/* Stats Cards */}
       <Row className="mb-4">
-        <Col md={4}>
+        <Col md={6}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="text-center">
               <h3 className="h2 text-primary mb-0">{records.length}</h3>
@@ -152,23 +143,13 @@ const MedicalRecordsDashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={4}>
+        <Col md={6}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="text-center">
               <h3 className="h2 text-success mb-0">
                 {records.filter((r) => r.sharedWith?.length > 0).length}
               </h3>
               <p className="text-muted mb-0">Shared Records</p>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body className="text-center">
-              <h3 className="h2 text-info mb-0">
-                {records.filter((r) => r.aiAnalysis).length}
-              </h3>
-              <p className="text-muted mb-0">AI Analyzed</p>
             </Card.Body>
           </Card>
         </Col>
@@ -232,14 +213,6 @@ const MedicalRecordsDashboard = () => {
                     </Alert>
                   )}
 
-                  {/* AI Analysis Status */}
-                  {record.aiAnalysis && (
-                    <Alert variant="info" className="py-2 mb-3 small">
-                      <FaRobot className="me-1" />
-                      AI Analysis Available
-                    </Alert>
-                  )}
-
                   {/* Action Buttons */}
                   <div className="d-grid gap-2">
                     <Button
@@ -250,24 +223,14 @@ const MedicalRecordsDashboard = () => {
                       <FaQrcode className="me-2" />
                       Show QR Code
                     </Button>
-                    <div className="btn-group">
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        onClick={() => handleShowAIAnalysis(record)}
-                      >
-                        <FaRobot className="me-1" />
-                        AI Analysis
-                      </Button>
-                      <Button
-                        variant="outline-info"
-                        size="sm"
-                        onClick={() => handleShowShare(record)}
-                      >
-                        <FaShare className="me-1" />
-                        Share
-                      </Button>
-                    </div>
+                    <Button
+                      variant="outline-info"
+                      size="sm"
+                      onClick={() => handleShowShare(record)}
+                    >
+                      <FaShare className="me-2" />
+                      Share with Doctor
+                    </Button>
                     <div className="btn-group">
                       <Button
                         variant="outline-secondary"
@@ -303,12 +266,6 @@ const MedicalRecordsDashboard = () => {
       <QRCodeDisplay
         show={showQRModal}
         onHide={() => setShowQRModal(false)}
-        record={selectedRecord}
-      />
-
-      <AIAnalysisModal
-        show={showAIModal}
-        onHide={() => setShowAIModal(false)}
         record={selectedRecord}
       />
 
