@@ -1,7 +1,7 @@
 const Conversation = require('../models/Conversation');
 const PatientContext = require('../models/PatientContext');
 const User = require('../models/User');
-const { generateReply } = require('../services/chatService');
+const { generateReply, summarizeConversations } = require('../services/chatService');
 
 const calcAge = (user) => {
   if (!user) return null;
@@ -14,7 +14,19 @@ const calcAge = (user) => {
 
 const unique = (arr) => [...new Set(arr.map((s) => s.slice(0, 100)))].slice(0, 10);
 
-// POST /api/chat/message  { message, conversationId? }
+const aiError = (res, error) => {
+  console.error('Chat error:', error);
+  if (error.status === 429) {
+    return res.status(429).json({ success: false, message: 'The AI is busy right now. Please try again in a minute.' });
+  }
+  return res.status(502).json({
+    success: false,
+    message: 'The AI service is unavailable. Please try again.',
+    error: process.env.NODE_ENV === 'development' ? error.message : undefined
+  });
+};
+
+// POST /api/chat/message  { message, conversationId?, importedContext? }
 exports.sendMessage = async (req, res) => {
   try {
     const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
@@ -25,15 +37,29 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Message is too long (max 2000 characters)' });
     }
 
+    const imported =
+      typeof req.body.importedContext === 'string' ? req.body.importedContext.trim().slice(0, 3000) : '';
+
     let conversation;
     if (req.body.conversationId) {
       conversation = await Conversation.findOne({ _id: req.body.conversationId, patient: req.user.id });
       if (!conversation) {
         return res.status(404).json({ success: false, message: 'Conversation not found' });
       }
+      if (imported) {
+        conversation.importedContext = [conversation.importedContext, imported]
+          .filter(Boolean)
+          .join('\n\n')
+          .slice(0, 4000);
+      }
     } else {
-      conversation = new Conversation({ patient: req.user.id, title: message.slice(0, 60) });
+      conversation = new Conversation({
+        patient: req.user.id,
+        title: message.slice(0, 60),
+        importedContext: imported
+      });
     }
+    const isNew = conversation.isNew;
 
     const [user, ctx] = await Promise.all([
       User.findById(req.user.id).select('age gender dateOfBirth'),
@@ -48,7 +74,12 @@ exports.sendMessage = async (req, res) => {
       allergies: ctx?.allergies
     };
 
-    const reply = await generateReply({ profile, history: conversation.messages, message });
+    const reply = await generateReply({
+      profile,
+      history: conversation.messages,
+      message,
+      importedContext: conversation.importedContext
+    });
 
     conversation.messages.push({ role: 'user', content: message });
     conversation.messages.push({
@@ -56,11 +87,12 @@ exports.sendMessage = async (req, res) => {
       content: reply.reply,
       structured: {
         mode: reply.mode,
-        followUpQuestions: reply.followUpQuestions,
+        questions: reply.questions,
         isEmergency: reply.isEmergency,
         assessment: reply.assessment
       }
     });
+    if (isNew && reply.title) conversation.title = reply.title;
     await conversation.save();
 
     const u = reply.profileUpdates;
@@ -81,14 +113,38 @@ exports.sendMessage = async (req, res) => {
     res.json({
       success: true,
       conversationId: conversation._id,
+      title: conversation.title,
       message: conversation.messages[conversation.messages.length - 1]
     });
   } catch (error) {
-    console.error('Chat error:', error);
-    if (error.status === 429) {
-      return res.status(429).json({ success: false, message: 'The AI is busy right now. Please try again in a minute.' });
+    aiError(res, error);
+  }
+};
+
+// POST /api/chat/import  { conversationIds: [] }  -> short summary of the chosen chats
+exports.importContext = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.conversationIds) ? req.body.conversationIds.slice(0, 3) : [];
+    if (!ids.length) {
+      return res.status(400).json({ success: false, message: 'Select at least one chat to import' });
     }
-    res.status(502).json({ success: false, message: 'The AI service is unavailable. Please try again.' });
+
+    const conversations = await Conversation.find({ _id: { $in: ids }, patient: req.user.id }).sort('-updatedAt');
+    if (!conversations.length) {
+      return res.status(404).json({ success: false, message: 'Chats not found' });
+    }
+
+    const summary = await summarizeConversations(conversations);
+    if (!summary) {
+      return res.status(502).json({ success: false, message: 'Could not summarise those chats. Please try again.' });
+    }
+
+    res.json({ success: true, summary, count: conversations.length });
+  } catch (error) {
+    if (error.name === 'CastError') {
+      return res.status(400).json({ success: false, message: 'Invalid chat selection' });
+    }
+    aiError(res, error);
   }
 };
 
@@ -143,7 +199,7 @@ exports.getContext = async (req, res) => {
   }
 };
 
-// DELETE /api/chat/context  (patient can erase saved health facts)
+// DELETE /api/chat/context
 exports.clearContext = async (req, res) => {
   try {
     await PatientContext.deleteOne({ patient: req.user.id });

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const messageSchema = new mongoose.Schema({
   role: { type: String, enum: ['user', 'assistant'], required: true },
   content: { type: String, required: true },
-  // mode, followUpQuestions, isEmergency, assessment (assistant messages only)
+  // mode, questions, isEmergency, assessment (assistant messages only)
   structured: { type: mongoose.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now }
 });
@@ -11,6 +11,8 @@ const messageSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
   patient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   title: { type: String, default: 'New chat' },
+  // Summary of earlier chats the patient chose to import
+  importedContext: { type: String, default: '' },
   messages: [messageSchema]
 }, { timestamps: true });
 
