@@ -24,3 +24,17 @@ yarn-error.log*
 
 .env
 server/uploads/
+
+# blockchain (Hardhat)
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
+blockchain/typechain-types/
+blockchain/coverage/
+blockchain/coverage.json
+blockchain/deployments/localhost.json
+blockchain/deployments/hardhat.json
+
+# never commit secrets or key material
+*.pem
+*.key

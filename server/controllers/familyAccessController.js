@@ -3,11 +3,14 @@
 const User = require('../models/User');
 const { sendEmail } = require('../services/emailService');
 const { grantAllRecords, revokeAllRecords } = require('../services/recordKeys');
+const chain = require('../services/chainAnchors');
 
 // Give a family member the keys to the patient's encrypted records. A failure
 // is logged, not fatal: the download endpoint re-creates a missing grant on
 // first use as long as the live permission is still valid.
 const syncGrantsSafely = async (patientId, memberId) => {
+  // One on-chain grant covers all of the patient's records, present and future
+  await chain.familyGranted(patientId, memberId);
   try {
     const count = await grantAllRecords(patientId, memberId);
     console.log(`🔑 Granted record keys (${count} records) to family member ${memberId}`);
@@ -352,6 +355,7 @@ exports.updatePermissions = async (req, res) => {
         await syncGrantsSafely(patientId, familyMemberId);
       } else if (!hasViewRecords && hadViewRecords) {
         await revokeAllRecords(patientId, familyMemberId);
+        await chain.familyRevoked(patientId, familyMemberId);
       }
     }
 
@@ -406,6 +410,7 @@ exports.revokeFamilyAccess = async (req, res) => {
     // Remove their keys to every record. Not swallowed on purpose: if this
     // fails the patient should see an error and can safely retry.
     await revokeAllRecords(patientId, familyMemberId);
+    await chain.familyRevoked(patientId, familyMemberId);
 
     const familyMember = await User.findById(familyMemberId);
     if (familyMember && familyMember.accessToPatients) {
