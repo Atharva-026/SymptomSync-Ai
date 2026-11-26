@@ -4,6 +4,12 @@ const User = require('../models/User');
 const { sendEmail } = require('../services/emailService');
 const { emitNotification } = require('../socket/socketHandler');
 
+// Email must never make a booking fail
+const safeEmail = (options) =>
+  sendEmail(options).catch((err) =>
+    console.error('Email failed (booking still saved):', err.message)
+  );
+
 // @desc    Create new appointment
 // @route   POST /api/appointments
 // @access  Private (Patient only)
@@ -60,7 +66,7 @@ exports.createAppointment = async (req, res) => {
       <p>Please login to your dashboard to view details.</p>
     `;
 
-    await sendEmail({
+    safeEmail({
       email: doctor.email,
       subject: 'New Patient Appointment - SymptomSync AI',
       html: emailContent
@@ -78,7 +84,7 @@ exports.createAppointment = async (req, res) => {
       <p>You will receive a reminder 15 minutes before your appointment.</p>
     `;
 
-    await sendEmail({
+    safeEmail({
       email: appointment.patient.email,
       subject: 'Appointment Confirmation - SymptomSync AI',
       html: patientEmailContent
